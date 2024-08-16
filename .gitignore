@@ -1,0 +1,33 @@
+# Dependency directories
+/node_modules
+
+# Build output
+/build
+/dist
+
+# Environment variables
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Editor directories and files
+/.vscode
+/.idea
+/.DS_Store
+
+# Logs
+/logs
+
+# Testing artifacts
+/coverage
+
+# Compiled output
+/*.js
+/*.map
+
+# Cache and temporary files
+/.cache
+/.temp
+/.sass-cache
+/yarn-error.log
