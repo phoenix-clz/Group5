@@ -54,7 +54,6 @@ const CardsPage = () => {
     bank: "",
     number: "",
     expiryDate: "",
-    cardholderName: "",
   });
 
   useEffect(() => {
@@ -90,13 +89,15 @@ const CardsPage = () => {
   };
 
   const fetchBanks = async () => {
-    // Replace with your API call
-    const mockedBanks = [
-      { id: 1, name: "Bank A" },
-      { id: 2, name: "Bank B" },
-      { id: 3, name: "Bank C" },
-    ];
-    setBanks(mockedBanks);
+    if (!user || !user.uid) return;
+    const banksCollection = collection(db, "banks");
+    const q = query(banksCollection, where("userId", "==", user.uid));
+    const banksSnapshot = await getDocs(q);
+    const banksList = banksSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    setBanks(banksList);
   };
 
   const fetchTransactions = async () => {
@@ -123,12 +124,16 @@ const CardsPage = () => {
       newCardDetails.bank &&
       newCardDetails.number &&
       newCardDetails.expiryDate &&
-      newCardDetails.cardholderName &&
       user &&
       user.uid
     ) {
+      const selectedBank = banks.find(
+        (bank) => bank.id === newCardDetails.bank
+      );
       const newCard = {
         ...newCardDetails,
+        bankName: selectedBank.name,
+        cardholderName: user.displayName || "User", // Fallback to "User" if displayName is not set
         linked: true,
         userId: user.uid,
       };
@@ -138,7 +143,6 @@ const CardsPage = () => {
         bank: "",
         number: "",
         expiryDate: "",
-        cardholderName: "",
       });
     }
   };
@@ -240,7 +244,7 @@ const CardsPage = () => {
               {cards.map((card) => (
                 <div key={card.id} className="p-4 bg-white rounded-lg shadow">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-xl font-semibold">{card.bank}</h3>
+                    <h3 className="text-xl font-semibold">{card.bankName}</h3>
                     <button
                       onClick={() => toggleCardLink(card.id)}
                       className={`p-1 rounded ${
@@ -278,16 +282,21 @@ const CardsPage = () => {
           {/* Add New Card */}
           <div className="mb-8">
             <h2 className="mb-4 text-2xl font-bold">Add New Card</h2>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <input
-                type="text"
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <select
                 value={newCardDetails.bank}
                 onChange={(e) =>
                   setNewCardDetails({ ...newCardDetails, bank: e.target.value })
                 }
-                placeholder="Bank Name"
                 className="p-2 border rounded"
-              />
+              >
+                <option value="">Select Bank</option>
+                {banks.map((bank) => (
+                  <option key={bank.id} value={bank.id}>
+                    {bank.name}
+                  </option>
+                ))}
+              </select>
               <input
                 type="text"
                 value={newCardDetails.number}
@@ -310,18 +319,6 @@ const CardsPage = () => {
                   })
                 }
                 placeholder="Expiry Date (MM/YY)"
-                className="p-2 border rounded"
-              />
-              <input
-                type="text"
-                value={newCardDetails.cardholderName}
-                onChange={(e) =>
-                  setNewCardDetails({
-                    ...newCardDetails,
-                    cardholderName: e.target.value,
-                  })
-                }
-                placeholder="Cardholder Name"
                 className="p-2 border rounded"
               />
             </div>

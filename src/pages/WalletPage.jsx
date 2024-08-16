@@ -13,6 +13,17 @@ import {
   Title,
 } from "chart.js";
 import { Pie, Bar } from "react-chartjs-2";
+import { db } from "../firebase-config";
+import {
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  query,
+  where,
+} from "firebase/firestore";
 
 ChartJS.register(
   ArcElement,
@@ -31,21 +42,40 @@ const WalletPage = () => {
   const [newWalletBalance, setNewWalletBalance] = useState("");
   const [newWalletPoints, setNewWalletPoints] = useState("");
   const [filter, setFilter] = useState("all");
+  const [user, setUser] = useState(null);
+  const [selectedWalletType, setSelectedWalletType] = useState("esewa");
+
+  const walletTypes = ["esewa", "khalti", "imepay", "phonepay", "other"];
 
   useEffect(() => {
-    fetchWallets();
+    if (user && user.uid) {
+      fetchWallets();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    const storedUser = sessionStorage.getItem("user");
+    if (storedUser) {
+      const parsedUser = JSON.parse(storedUser);
+      if (parsedUser && parsedUser.uid) {
+        setUser(parsedUser);
+      } else {
+        console.error("User object is missing uid");
+      }
+    }
   }, []);
 
   const fetchWallets = async () => {
-    // Replace with your API call
-    const mockedWallets = [
-      { id: 1, name: "eSewa", balance: 1000, points: 50 },
-      { id: 2, name: "Khalti", balance: 500, points: 25 },
-      { id: 3, name: "FonePay", balance: 750, points: 30 },
-      { id: 4, name: "IMEPay", balance: 300, points: 15 },
-    ];
-    setWallets(mockedWallets);
-    calculateTotalAmount(mockedWallets);
+    if (!user || !user.uid) return;
+    const walletsCollection = collection(db, "wallets");
+    const q = query(walletsCollection, where("userId", "==", user.uid));
+    const walletsSnapshot = await getDocs(q);
+    const walletsList = walletsSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    setWallets(walletsList);
+    calculateTotalAmount(walletsList);
   };
 
   const calculateTotalAmount = (wallets) => {
@@ -53,27 +83,40 @@ const WalletPage = () => {
     setTotalAmount(total);
   };
 
-  const addNewWallet = () => {
-    if (newWalletName && newWalletBalance) {
+  const addNewWallet = async () => {
+    if (newWalletBalance && user && user.uid) {
+      const walletName =
+        selectedWalletType === "other" ? newWalletName : selectedWalletType;
+      if (!walletName) {
+        alert("Please enter a wallet name for 'Other' type");
+        return;
+      }
       const newWallet = {
-        id: wallets.length + 1,
-        name: newWalletName,
+        name: walletName,
         balance: parseFloat(newWalletBalance),
         points: parseInt(newWalletPoints) || 0,
+        userId: user.uid,
       };
-      const updatedWallets = [...wallets, newWallet];
-      setWallets(updatedWallets);
-      calculateTotalAmount(updatedWallets);
+      await addDoc(collection(db, "wallets"), newWallet);
+      fetchWallets();
+      setSelectedWalletType("esewa");
       setNewWalletName("");
       setNewWalletBalance("");
       setNewWalletPoints("");
+    } else {
+      alert("Please fill in all required fields");
     }
   };
 
-  const removeWallet = (walletId) => {
-    const updatedWallets = wallets.filter((wallet) => wallet.id !== walletId);
-    setWallets(updatedWallets);
-    calculateTotalAmount(updatedWallets);
+  const removeWallet = async (walletId) => {
+    await deleteDoc(doc(db, "wallets", walletId));
+    fetchWallets();
+  };
+
+  const updateWallet = async (walletId, newData) => {
+    const walletRef = doc(db, "wallets", walletId);
+    await updateDoc(walletRef, newData);
+    fetchWallets();
   };
 
   const filteredWallets = wallets.filter((wallet) => {
@@ -147,7 +190,10 @@ const WalletPage = () => {
               {filteredWallets.map((wallet) => (
                 <div key={wallet.id} className="p-4 bg-white rounded-lg shadow">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-xl font-semibold">{wallet.name}</h3>
+                    <h3 className="text-xl font-semibold">
+                      {wallet.name.charAt(0).toUpperCase() +
+                        wallet.name.slice(1)}
+                    </h3>
                     <button
                       onClick={() => removeWallet(wallet.id)}
                       className="p-1 text-white bg-red-500 rounded"
@@ -169,13 +215,26 @@ const WalletPage = () => {
           <div className="mb-8">
             <h2 className="mb-4 text-2xl font-bold">Add New Wallet</h2>
             <div className="flex flex-wrap gap-4">
-              <input
-                type="text"
-                value={newWalletName}
-                onChange={(e) => setNewWalletName(e.target.value)}
-                placeholder="Wallet Name"
+              <select
+                value={selectedWalletType}
+                onChange={(e) => setSelectedWalletType(e.target.value)}
                 className="p-2 border rounded"
-              />
+              >
+                {walletTypes.map((type) => (
+                  <option key={type} value={type}>
+                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                  </option>
+                ))}
+              </select>
+              {selectedWalletType === "other" && (
+                <input
+                  type="text"
+                  value={newWalletName}
+                  onChange={(e) => setNewWalletName(e.target.value)}
+                  placeholder="Custom Wallet Name"
+                  className="p-2 border rounded"
+                />
+              )}
               <input
                 type="number"
                 value={newWalletBalance}

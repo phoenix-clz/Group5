@@ -50,6 +50,7 @@ const BankPage = () => {
   const [transactionType, setTransactionType] = useState("all");
   const [newBankName, setNewBankName] = useState("");
   const [newBankBalance, setNewBankBalance] = useState("");
+  const [nepaliBanks, setNepaliBanks] = useState([]);
 
   useEffect(() => {
     const storedUser = sessionStorage.getItem("user");
@@ -69,6 +70,37 @@ const BankPage = () => {
       fetchBanks();
       fetchTransactions();
     }
+
+    // Set the list of Nepali banks
+    setNepaliBanks([
+      "Nepal Rastra Bank",
+      "Nepal Bank Limited",
+      "Rastriya Banijya Bank",
+      "Agricultural Development Bank",
+      "Nabil Bank",
+      "Nepal Investment Bank",
+      "Standard Chartered Bank Nepal",
+      "Himalayan Bank",
+      "Nepal SBI Bank",
+      "Nepal Bangladesh Bank",
+      "Everest Bank",
+      "Kumari Bank",
+      "Laxmi Bank",
+      "Siddhartha Bank",
+      "Global IME Bank",
+      "Citizens Bank International",
+      "Prime Commercial Bank",
+      "Sunrise Bank",
+      "NIC Asia Bank",
+      "Machhapuchchhre Bank",
+      "NMB Bank",
+      "Prabhu Bank",
+      "Mega Bank Nepal",
+      "Civil Bank",
+      "Century Commercial Bank",
+      "Sanima Bank",
+      "Other",
+    ]);
   }, [user]);
 
   const fetchBanks = async () => {
@@ -125,7 +157,10 @@ const BankPage = () => {
   const addNewBank = async () => {
     if (newBankName && newBankBalance && user && user.uid) {
       const newBank = {
-        name: newBankName,
+        name:
+          newBankName === "Other"
+            ? prompt("Enter custom bank name:")
+            : newBankName,
         balance: parseFloat(newBankBalance),
         linked: true,
         userId: user.uid,
@@ -249,13 +284,18 @@ const BankPage = () => {
           <div className="mb-8">
             <h2 className="mb-4 text-2xl font-bold">Add New Bank</h2>
             <div className="flex gap-4">
-              <input
-                type="text"
+              <select
                 value={newBankName}
                 onChange={(e) => setNewBankName(e.target.value)}
-                placeholder="Bank Name"
                 className="p-2 border rounded"
-              />
+              >
+                <option value="">Select a bank</option>
+                {nepaliBanks.map((bank, index) => (
+                  <option key={index} value={bank}>
+                    {bank}
+                  </option>
+                ))}
+              </select>
               <input
                 type="number"
                 value={newBankBalance}
