@@ -15,6 +15,17 @@ import "react-datepicker/dist/react-datepicker.css";
 import { MinusCircleIcon, PlusCircleIcon } from "@heroicons/react/16/solid";
 import Sidebar from "../components/Sidebar";
 import { DashNavbar } from "../components/DashNavbar";
+import { db } from "../firebase-config";
+import {
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  query,
+  where,
+} from "firebase/firestore";
 
 ChartJS.register(
   ArcElement,
@@ -27,6 +38,7 @@ ChartJS.register(
 );
 
 const BankPage = () => {
+  const [user, setUser] = useState(null);
   const [banks, setBanks] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [selectedBank, setSelectedBank] = useState("all");
@@ -40,59 +52,49 @@ const BankPage = () => {
   const [newBankBalance, setNewBankBalance] = useState("");
 
   useEffect(() => {
-    fetchBanks();
-    fetchTransactions();
+    const storedUser = sessionStorage.getItem("user");
+    if (storedUser) {
+      const parsedUser = JSON.parse(storedUser);
+      if (parsedUser && parsedUser.uid) {
+        setUser(parsedUser);
+      } else {
+        console.error("User object is missing uid");
+        // Handle this error appropriately, maybe redirect to login
+      }
+    }
   }, []);
 
+  useEffect(() => {
+    if (user && user.uid) {
+      fetchBanks();
+      fetchTransactions();
+    }
+  }, [user]);
+
   const fetchBanks = async () => {
-    // Replace with your API call
-    const mockedBanks = [
-      { id: 1, name: "Bank A", balance: 5000, linked: true },
-      { id: 2, name: "Bank B", balance: 3000, linked: true },
-      { id: 3, name: "Bank C", balance: 2000, linked: false },
-    ];
-    setBanks(mockedBanks);
-    calculateTotalAmount(mockedBanks);
+    if (!user || !user.uid) return;
+    const banksCollection = collection(db, "banks");
+    const q = query(banksCollection, where("userId", "==", user.uid));
+    const banksSnapshot = await getDocs(q);
+    const banksList = banksSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    setBanks(banksList);
+    calculateTotalAmount(banksList);
   };
 
   const fetchTransactions = async () => {
-    // Replace with your API call
-    const mockedTransactions = [
-      {
-        id: 1,
-        bankId: 1,
-        amount: 100,
-        type: "income",
-        description: "Salary",
-        date: "2023-05-01",
-      },
-      {
-        id: 2,
-        bankId: 1,
-        amount: -50,
-        type: "expense",
-        description: "Groceries",
-        date: "2023-05-02",
-      },
-      {
-        id: 3,
-        bankId: 2,
-        amount: -30,
-        type: "expense",
-        description: "Restaurant",
-        date: "2023-05-03",
-      },
-      {
-        id: 4,
-        bankId: 2,
-        amount: 200,
-        type: "income",
-        description: "Freelance",
-        date: "2023-05-04",
-      },
-    ];
-    setTransactions(mockedTransactions);
-    calculateTotals(mockedTransactions);
+    if (!user || !user.uid) return;
+    const transactionsCollection = collection(db, "transactions");
+    const q = query(transactionsCollection, where("userId", "==", user.uid));
+    const transactionsSnapshot = await getDocs(q);
+    const transactionsList = transactionsSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    setTransactions(transactionsList);
+    calculateTotals(transactionsList);
   };
 
   const calculateTotalAmount = (banks) => {
@@ -113,34 +115,34 @@ const BankPage = () => {
     setTotalExpenses(expenses);
   };
 
-  const toggleBankLink = (bankId) => {
-    const updatedBanks = banks.map((bank) =>
-      bank.id === bankId ? { ...bank, linked: !bank.linked } : bank
-    );
-    setBanks(updatedBanks);
-    calculateTotalAmount(updatedBanks);
+  const toggleBankLink = async (bankId) => {
+    const bankRef = doc(db, "banks", bankId);
+    const bank = banks.find((b) => b.id === bankId);
+    await updateDoc(bankRef, { linked: !bank.linked });
+    fetchBanks();
   };
 
-  const addNewBank = () => {
-    if (newBankName && newBankBalance) {
+  const addNewBank = async () => {
+    if (newBankName && newBankBalance && user && user.uid) {
       const newBank = {
-        id: banks.length + 1,
         name: newBankName,
         balance: parseFloat(newBankBalance),
         linked: true,
+        userId: user.uid,
       };
-      const updatedBanks = [...banks, newBank];
-      setBanks(updatedBanks);
-      calculateTotalAmount(updatedBanks);
+      await addDoc(collection(db, "banks"), newBank);
+      fetchBanks();
       setNewBankName("");
       setNewBankBalance("");
+    } else {
+      console.error("Missing required data for adding a new bank");
+      // Handle this error appropriately
     }
   };
 
-  const removeBank = (bankId) => {
-    const updatedBanks = banks.filter((bank) => bank.id !== bankId);
-    setBanks(updatedBanks);
-    calculateTotalAmount(updatedBanks);
+  const removeBank = async (bankId) => {
+    await deleteDoc(doc(db, "banks", bankId));
+    fetchBanks();
   };
 
   const filteredTransactions = transactions.filter((t) => {
@@ -180,11 +182,13 @@ const BankPage = () => {
     ],
   };
 
+  if (!user) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
       <Sidebar />
-
       <div className="flex-1 overflow-y-auto">
         <DashNavbar />
         <div className="container p-4 mx-auto">
@@ -196,18 +200,6 @@ const BankPage = () => {
               <p className="text-3xl font-bold text-green-600">
                 ${totalAmount.toFixed(2)}
               </p>
-            </div>
-            <div className="col-span-1 p-4 bg-white rounded-lg shadow md:col-span-2">
-              <h2 className="mb-2 text-xl font-semibold">Linked Banks</h2>
-              <ul>
-                {banks
-                  .filter((bank) => bank.linked)
-                  .map((bank) => (
-                    <li key={bank.id} className="mb-1">
-                      {bank.name}: ${bank.balance.toFixed(2)}
-                    </li>
-                  ))}
-              </ul>
             </div>
           </div>
 
