@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { MinusCircleIcon } from "@heroicons/react/16/solid";
 import Sidebar from "../components/Sidebar";
-import { Navbar } from "../components/Navbar";
+import {DashNavbar} from "../components/DashNavbar";
 
 const WalletPage = () => {
   const [wallets, setWallets] = useState([]);

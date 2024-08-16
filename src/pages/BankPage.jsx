@@ -14,7 +14,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { MinusCircleIcon, PlusCircleIcon } from "@heroicons/react/16/solid";
 import Sidebar from "../components/Sidebar";
-import { Navbar } from "../components/Navbar";
+import { DashNavbar } from "../components/DashNavbar";
 
 ChartJS.register(
   ArcElement,
@@ -186,7 +186,7 @@ const BankPage = () => {
       <Sidebar />
 
       <div className="flex-1 overflow-y-auto">
-        <Navbar />
+        <DashNavbar />
         <div className="container p-4 mx-auto">
           <h1 className="mb-6 text-3xl font-bold">Your Bank Dashboard</h1>
 

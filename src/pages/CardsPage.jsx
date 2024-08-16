@@ -18,7 +18,7 @@ import {
   BellIcon,
 } from "@heroicons/react/24/solid";
 import Sidebar from "../components/Sidebar";
-import { Navbar } from "../components/Navbar";
+import { DashNavbar } from "../components/DashNavbar";
 
 ChartJS.register(
   ArcElement,
@@ -221,7 +221,7 @@ const CardsPage = () => {
     <div className="flex h-screen bg-gray-100">
       <Sidebar />
       <div className="flex-1 overflow-y-auto">
-        <Navbar />
+        <DashNavbar />
         <div className="container p-4 mx-auto">
           <h1 className="mb-6 text-3xl font-bold">Your Cards Dashboard</h1>
 

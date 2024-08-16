@@ -13,7 +13,7 @@ import {
   ArcElement,
 } from "chart.js";
 import Sidebar from "../components/Sidebar";
-import { Navbar } from "../components/Navbar";
+import { DashNavbar } from "../components/DashNavbar";
 
 ChartJS.register(
   CategoryScale,
@@ -119,7 +119,7 @@ const Dashboard = () => {
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto">
         {/* Navbar */}
-        <Navbar />
+        <DashNavbar />
 
         {/* Dashboard Content */}
         <div className="p-6">
