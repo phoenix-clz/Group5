@@ -16,6 +16,8 @@
     "firebase": "^10.13.0",
     "framer-motion": "^11.3.28",
     "heroicons": "^2.1.5",
+    "jspdf": "^2.5.1",
+    "jspdf-autotable": "^3.8.2",
     "postcss": "^8.4.41",
     "prop-types": "^15.8.1",
     "react": "^18.3.1",

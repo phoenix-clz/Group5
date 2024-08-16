@@ -46,7 +46,10 @@ const Sidebar = () => {
   }, []);
 
   const fetchUserPlatforms = async () => {
-    const userId = auth.currentUser.uid;
+    //get user from the session storage
+    const storedUser = sessionStorage.getItem("user");
+
+    const userId = JSON.parse(storedUser)?.uid;
     const platforms = {};
 
     for (const platformType of [

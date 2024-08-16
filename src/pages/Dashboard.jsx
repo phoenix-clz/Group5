@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Line, Pie } from "react-chartjs-2";
+import { useState, useEffect } from "react";
+import { Line } from "react-chartjs-2";
 import { useNavigate } from "react-router-dom";
 import {
   Chart as ChartJS,
@@ -10,10 +10,13 @@ import {
   Title,
   Tooltip,
   Legend,
-  ArcElement,
 } from "chart.js";
 import Sidebar from "../components/Sidebar";
 import { DashNavbar } from "../components/DashNavbar";
+import { db } from "../firebase-config";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 ChartJS.register(
   CategoryScale,
@@ -22,8 +25,7 @@ ChartJS.register(
   LineElement,
   Title,
   Tooltip,
-  Legend,
-  ArcElement
+  Legend
 );
 
 const Dashboard = () => {
@@ -35,75 +37,201 @@ const Dashboard = () => {
   }
 
   const [selectedPlatform, setSelectedPlatform] = useState("all");
+  const [advice, setAdvice] = useState("");
+  const [userData, setUserData] = useState(null);
+  const [transactions, setTransactions] = useState([]);
 
-  // Mock data - replace with actual data from your backend
-  const transactions = [
-    {
-      id: 1,
-      amount: 100,
-      type: "credit",
-      platform: "bank",
-      date: "2023-05-01",
-      details: "Salary",
-    },
-    {
-      id: 2,
-      amount: 50,
-      type: "debit",
-      platform: "card",
-      date: "2023-05-02",
-      details: "Groceries",
-    },
-    {
-      id: 3,
-      amount: 200,
-      type: "credit",
-      platform: "wallet",
-      date: "2023-05-03",
-      details: "Refund",
-    },
-    // ... more transactions
-  ];
+  const generatePDF = () => {
+    const doc = new jsPDF();
 
-  const calculateBalance = (platform) => {
-    return transactions
-      .filter((t) => t.platform === platform)
-      .reduce(
-        (acc, transaction) =>
-          transaction.type === "credit"
-            ? acc + transaction.amount
-            : acc - transaction.amount,
-        0
+    const safeGet = (obj, path, defaultValue = "N/A") => {
+      return (
+        path.split(".").reduce((acc, part) => acc && acc[part], obj) ??
+        defaultValue
       );
+    };
+
+    const formatCurrency = (value) => {
+      if (typeof value === "number") {
+        return value.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, "$&,");
+      }
+      return "N/A";
+    };
+
+    doc.setFontSize(20);
+    doc.text("Comprehensive Financial Report", 105, 15, null, null, "center");
+
+    doc.setFontSize(12);
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 25);
+    doc.text(`For: ${safeGet(user, "displayName", "User")}`, 20, 32);
+
+    let yPos = 45;
+
+    doc.setFontSize(16);
+    doc.text("Financial Overview", 20, yPos);
+    yPos += 10;
+
+    doc.setFontSize(12);
+    doc.text(`Total Balance: Rs. ${formatCurrency(totalBalance)}`, 30, yPos);
+    yPos += 7;
+    doc.text(`Financial Health Score: ${financialHealthScore}`, 30, yPos);
+    yPos += 7;
+    doc.text(`Total Banks: ${safeGet(userData, "banks.length", 0)}`, 30, yPos);
+    yPos += 7;
+    doc.text(`Total Cards: ${safeGet(userData, "cards.length", 0)}`, 30, yPos);
+    yPos += 7;
+    doc.text(
+      `Total Wallets: ${safeGet(userData, "wallets.length", 0)}`,
+      30,
+      yPos
+    );
+    yPos += 7;
+    doc.text(`Total Loans: ${safeGet(userData, "loans.length", 0)}`, 30, yPos);
+    yPos += 7;
+    doc.text(
+      `Total Insurances: ${safeGet(userData, "insurances.length", 0)}`,
+      30,
+      yPos
+    );
+    yPos += 15;
+
+    // Add sections for banks, cards, wallets, loans, and insurances here
+    // Similar to the previous version, but use formatCurrency for amounts
+
+    // Transactions History
+    doc.addPage();
+    doc.setFontSize(16);
+    doc.text("Transaction History", 20, 20);
+
+    const transactionData = transactions.map((t) => [
+      `Rs. ${formatCurrency(t.amount)}`,
+      safeGet(t, "type"),
+      safeGet(t, "platform"),
+      safeGet(t, "date"),
+      safeGet(t, "details"),
+    ]);
+
+    autoTable(doc, {
+      startY: 30,
+      head: [["Amount", "Type", "Platform", "Date", "Details"]],
+      body: transactionData,
+    });
+
+    // Financial Advice
+    doc.addPage();
+    doc.setFontSize(16);
+    doc.text("Personalized Financial Advice", 20, 20);
+
+    doc.setFontSize(12);
+    const adviceLines = doc.splitTextToSize(
+      advice || "No advice available at this time.",
+      170
+    );
+    doc.text(adviceLines, 20, 30);
+
+    doc.save("comprehensive_financial_report.pdf");
   };
 
-  const totalBankBalance = calculateBalance("bank");
-  const totalWalletBalance = calculateBalance("wallet");
-  const totalBalance = totalBankBalance + totalWalletBalance;
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (user) {
+        const userDataObj = {
+          banks: [],
+          cards: [],
+          insurances: [],
+          loans: [],
+          wallets: [],
+        };
 
-  // Financial health score
-  const totalIncome = transactions
-    .filter((t) => t.type === "credit")
-    .reduce((acc, transaction) => acc + transaction.amount, 0);
+        const collections = [
+          "banks",
+          "cards",
+          "insurances",
+          "loans",
+          "wallets",
+        ];
 
-  const totalExpenditure = transactions
-    .filter((t) => t.type === "debit")
-    .reduce((acc, transaction) => acc + transaction.amount, 0);
+        for (const collectionName of collections) {
+          const q = query(
+            collection(db, collectionName),
+            where("userId", "==", user.uid)
+          );
+          const querySnapshot = await getDocs(q);
+          querySnapshot.forEach((doc) => {
+            userDataObj[collectionName].push({ id: doc.id, ...doc.data() });
+          });
+        }
 
-  const financialHealthScore =
-    ((totalIncome - totalExpenditure) / totalIncome) * 100;
+        setUserData(userDataObj);
 
-  const financialHealthScoreData = {
-    labels: ["January", "February", "March", "April", "May", "June"],
-    datasets: [
-      {
-        label: "Financial Health Score",
-        data: [80, 85, 78, 82, 90, financialHealthScore],
-        borderColor: "rgb(75, 192, 192)",
-        tension: 0.1,
-      },
-    ],
+        // Create transactions from the fetched data
+        const allTransactions = [
+          ...userDataObj.banks.map((bank) => ({
+            id: bank.id,
+            amount: bank.balance,
+            type: "credit",
+            platform: "bank",
+            date: new Date().toISOString().split("T")[0], // Use current date as we don't have transaction dates
+            details: `Bank: ${bank.name}`,
+          })),
+          ...userDataObj.cards.map((card) => ({
+            id: card.id,
+            amount: parseFloat(card.number),
+            type: "debit",
+            platform: "card",
+            date: new Date().toISOString().split("T")[0],
+            details: `Card: ${card.cardholderName}`,
+          })),
+          ...userDataObj.wallets.map((wallet) => ({
+            id: wallet.id,
+            amount: wallet.balance,
+            type: "credit",
+            platform: "wallet",
+            date: new Date().toISOString().split("T")[0],
+            details: `Wallet: ${wallet.name}`,
+          })),
+        ];
+
+        setTransactions(allTransactions);
+      }
+    };
+
+    fetchUserData();
+  }, [user]);
+
+  const calculateTotalBalance = () => {
+    if (!userData) return 0;
+    const bankBalance = userData.banks.reduce(
+      (sum, bank) => sum + bank.balance,
+      0
+    );
+    const walletBalance = userData.wallets.reduce(
+      (sum, wallet) => sum + wallet.balance,
+      0
+    );
+    return bankBalance + walletBalance;
   };
+
+  const calculateFinancialHealthScore = () => {
+    if (!userData) return 0;
+
+    const totalIncome =
+      userData.banks.reduce((sum, bank) => sum + bank.balance, 0) +
+      userData.wallets.reduce((sum, wallet) => sum + wallet.balance, 0);
+
+    const totalExpenditure =
+      userData.cards.reduce((sum, card) => sum + parseFloat(card.number), 0) +
+      userData.loans.reduce((sum, loan) => sum + loan.amount, 0);
+
+    if (totalIncome === 0) return "Poor";
+
+    const score = ((totalIncome - totalExpenditure) / totalIncome) * 100;
+
+    return score < 0 ? "Poor" : score.toFixed(2);
+  };
+
+  const totalBalance = calculateTotalBalance();
+  const financialHealthScore = calculateFinancialHealthScore();
 
   const monthlyData = {
     labels: ["January", "February", "March", "April", "May", "June"],
@@ -125,31 +253,37 @@ const Dashboard = () => {
     ],
   };
 
-  const pieChartData = {
-    labels: ["Bank", "Card", "Wallet", "Cash", "Loan", "Insurance"],
-    datasets: [
-      {
-        data: [300, 50, 100, 200, 150, 100],
-        backgroundColor: [
-          "rgba(255, 99, 132, 0.2)",
-          "rgba(54, 162, 235, 0.2)",
-          "rgba(255, 206, 86, 0.2)",
-          "rgba(75, 192, 192, 0.2)",
-          "rgba(153, 102, 255, 0.2)",
-          "rgba(255, 159, 64, 0.2)",
-        ],
-        borderColor: [
-          "rgba(255, 99, 132, 1)",
-          "rgba(54, 162, 235, 1)",
-          "rgba(255, 206, 86, 1)",
-          "rgba(75, 192, 192, 1)",
-          "rgba(153, 102, 255, 1)",
-          "rgba(255, 159, 64, 1)",
-        ],
-        borderWidth: 1,
-      },
-    ],
+  const getFinancialAdvice = async () => {
+    try {
+      const userFinancialData = {
+        totalBalance,
+        financialHealthScore,
+        userData,
+      };
+
+      const response = await fetch(
+        "http://localhost:3001/api/get-financial-advice",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(userFinancialData),
+        }
+      );
+
+      const data = await response.json();
+      setAdvice(data.advice);
+    } catch (error) {
+      console.error("Error fetching financial advice:", error);
+    }
   };
+
+  useEffect(() => {
+    if (userData) {
+      getFinancialAdvice();
+    }
+  }, [userData]);
 
   const filteredTransactions =
     selectedPlatform === "all"
@@ -158,19 +292,20 @@ const Dashboard = () => {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
       <Sidebar />
-
-      {/* Main Content */}
       <div className="flex-1 overflow-y-auto">
-        {/* Navbar */}
         <DashNavbar />
-
-        {/* Dashboard Content */}
         <div className="p-6">
-          {/* User Overview Card */}
-          <div className="p-6 mb-6 bg-white rounded-lg shadow-md">
-            <h2 className="mb-4 text-2xl font-semibold">User Overview</h2>
+          <div className="relative p-6 mb-6 bg-white rounded-lg shadow-md">
+            <div className="flex items-start justify-between mb-4">
+              <h2 className="text-2xl font-semibold">User Overview</h2>
+              <button
+                onClick={generatePDF}
+                className="px-4 py-2 text-sm text-white bg-blue-500 rounded hover:bg-blue-600"
+              >
+                Generate Report
+              </button>
+            </div>
             <p className="mb-2 text-3xl font-bold text-green-600">
               Rs. {totalBalance.toLocaleString()}
             </p>
@@ -179,44 +314,35 @@ const Dashboard = () => {
               Financial Health Score:
               <span
                 className={
-                  financialHealthScore > 70
+                  financialHealthScore === "Poor"
+                    ? "text-red-500"
+                    : parseFloat(financialHealthScore) > 70
                     ? "text-green-500"
-                    : financialHealthScore > 40
+                    : parseFloat(financialHealthScore) > 40
                     ? "text-yellow-500"
                     : "text-red-500"
                 }
               >
                 {" "}
-                {financialHealthScore.toFixed(2)}%
+                {financialHealthScore === "Poor"
+                  ? "Poor"
+                  : `${financialHealthScore}%`}
               </span>
             </p>
           </div>
 
-          {/* Charts */}
-          <div className="grid grid-cols-1 gap-6 mb-6 md:grid-cols-2">
-            <div className="p-6 bg-white rounded-lg shadow-md">
-              <h3 className="mb-4 text-xl font-semibold">
-                Financial Health Score
-              </h3>
-              <Line data={financialHealthScoreData} />
-            </div>
-            <div className="p-6 bg-white rounded-lg shadow-md">
-              <h3 className="mb-4 text-xl font-semibold">
-                Platform Distribution
-              </h3>
-              <Pie data={pieChartData} />
-            </div>
+          <div className="p-6 mb-6 bg-white rounded-lg shadow-md">
+            <h3 className="mb-4 text-xl font-semibold">Personalized Advice</h3>
+            <p className="text-gray-800">{advice || "Loading advice..."}</p>
           </div>
 
-          {/* Monthly Income & Expenditure */}
-          <div className="p-6 mb-6 bg-white rounded-lg shadow-md">
+          <div className="flex-1 p-6 bg-white rounded-lg shadow-md">
             <h3 className="mb-4 text-xl font-semibold">
               Monthly Income & Expenditure
             </h3>
-            <Line data={monthlyData} />
+            <Line data={monthlyData} height={80} width={300} />
           </div>
 
-          {/* Transactions Table */}
           <div className="p-6 bg-white rounded-lg shadow-md">
             <h3 className="mb-4 text-xl font-semibold">Recent Transactions</h3>
             <div className="mb-4">
@@ -233,9 +359,6 @@ const Dashboard = () => {
                 <option value="bank">Bank</option>
                 <option value="card">Card</option>
                 <option value="wallet">Wallet</option>
-                <option value="cash">Cash</option>
-                <option value="loan">Loan</option>
-                <option value="insurance">Insurance</option>
               </select>
             </div>
             <table className="w-full">
@@ -259,8 +382,7 @@ const Dashboard = () => {
                             : "text-red-500"
                         }
                       >
-                        {transaction.type === "credit" ? "+" : "-"}$
-                        {transaction.amount}
+                        Rs. {transaction.amount}
                       </span>
                     </td>
                     <td className="p-2 capitalize">{transaction.type}</td>
