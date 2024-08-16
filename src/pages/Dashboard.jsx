@@ -28,7 +28,6 @@ ChartJS.register(
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  //get user from session
   const user = JSON.parse(sessionStorage.getItem("user"));
 
   if (!user) {
@@ -38,8 +37,6 @@ const Dashboard = () => {
   const [selectedPlatform, setSelectedPlatform] = useState("all");
 
   // Mock data - replace with actual data from your backend
-  const totalAmount = 50000;
-  const verifiedStatus = true;
   const transactions = [
     {
       id: 1,
@@ -68,18 +65,61 @@ const Dashboard = () => {
     // ... more transactions
   ];
 
-  const filteredTransactions =
-    selectedPlatform === "all"
-      ? transactions
-      : transactions.filter((t) => t.platform === selectedPlatform);
+  const calculateBalance = (platform) => {
+    return transactions
+      .filter((t) => t.platform === platform)
+      .reduce(
+        (acc, transaction) =>
+          transaction.type === "credit"
+            ? acc + transaction.amount
+            : acc - transaction.amount,
+        0
+      );
+  };
 
-  const lineChartData = {
+  const totalBankBalance = calculateBalance("bank");
+  const totalWalletBalance = calculateBalance("wallet");
+  const totalBalance = totalBankBalance + totalWalletBalance;
+
+  // Financial health score
+  const totalIncome = transactions
+    .filter((t) => t.type === "credit")
+    .reduce((acc, transaction) => acc + transaction.amount, 0);
+
+  const totalExpenditure = transactions
+    .filter((t) => t.type === "debit")
+    .reduce((acc, transaction) => acc + transaction.amount, 0);
+
+  const financialHealthScore =
+    ((totalIncome - totalExpenditure) / totalIncome) * 100;
+
+  const financialHealthScoreData = {
     labels: ["January", "February", "March", "April", "May", "June"],
     datasets: [
       {
-        label: "Monthly Expenses",
-        data: [1000, 1500, 1200, 1800, 2000, 1700],
+        label: "Financial Health Score",
+        data: [80, 85, 78, 82, 90, financialHealthScore],
         borderColor: "rgb(75, 192, 192)",
+        tension: 0.1,
+      },
+    ],
+  };
+
+  const monthlyData = {
+    labels: ["January", "February", "March", "April", "May", "June"],
+    datasets: [
+      {
+        label: "Income",
+        data: [5000, 5500, 5200, 5800, 6000, 5700],
+        borderColor: "rgba(75, 192, 192, 1)",
+        backgroundColor: "rgba(75, 192, 192, 0.2)",
+        tension: 0.1,
+      },
+      {
+        label: "Expenditure",
+        data: [1000, 1500, 1200, 1800, 2000, 1700],
+        borderColor: "rgba(255, 99, 132, 1)",
+        backgroundColor: "rgba(255, 99, 132, 0.2)",
         tension: 0.1,
       },
     ],
@@ -111,6 +151,11 @@ const Dashboard = () => {
     ],
   };
 
+  const filteredTransactions =
+    selectedPlatform === "all"
+      ? transactions
+      : transactions.filter((t) => t.platform === selectedPlatform);
+
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
@@ -127,15 +172,22 @@ const Dashboard = () => {
           <div className="p-6 mb-6 bg-white rounded-lg shadow-md">
             <h2 className="mb-4 text-2xl font-semibold">User Overview</h2>
             <p className="mb-2 text-3xl font-bold text-green-600">
-              Rs. {totalAmount.toLocaleString()}
+              Rs. {totalBalance.toLocaleString()}
             </p>
             <p className="text-gray-600">Total Balance</p>
             <p className="mt-2">
-              Verification Status:
+              Financial Health Score:
               <span
-                className={verifiedStatus ? "text-green-500" : "text-red-500"}
+                className={
+                  financialHealthScore > 70
+                    ? "text-green-500"
+                    : financialHealthScore > 40
+                    ? "text-yellow-500"
+                    : "text-red-500"
+                }
               >
-                {verifiedStatus ? " Verified" : " Not Verified"}
+                {" "}
+                {financialHealthScore.toFixed(2)}%
               </span>
             </p>
           </div>
@@ -143,8 +195,10 @@ const Dashboard = () => {
           {/* Charts */}
           <div className="grid grid-cols-1 gap-6 mb-6 md:grid-cols-2">
             <div className="p-6 bg-white rounded-lg shadow-md">
-              <h3 className="mb-4 text-xl font-semibold">Monthly Expenses</h3>
-              <Line data={lineChartData} />
+              <h3 className="mb-4 text-xl font-semibold">
+                Financial Health Score
+              </h3>
+              <Line data={financialHealthScoreData} />
             </div>
             <div className="p-6 bg-white rounded-lg shadow-md">
               <h3 className="mb-4 text-xl font-semibold">
@@ -152,6 +206,14 @@ const Dashboard = () => {
               </h3>
               <Pie data={pieChartData} />
             </div>
+          </div>
+
+          {/* Monthly Income & Expenditure */}
+          <div className="p-6 mb-6 bg-white rounded-lg shadow-md">
+            <h3 className="mb-4 text-xl font-semibold">
+              Monthly Income & Expenditure
+            </h3>
+            <Line data={monthlyData} />
           </div>
 
           {/* Transactions Table */}
