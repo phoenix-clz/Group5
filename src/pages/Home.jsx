@@ -1,7 +1,12 @@
 import { useState, useEffect } from "react";
 import { signInWithGoogle } from "../firebase-config";
+import NavBar from "../components/Navbar";
+import Hero from "../components/Hero";
+import FeaturesSection from "../components/FeatureSection";
+import Footer from "../components/Footer";
 import { FaSignOutAlt, FaTachometerAlt } from "react-icons/fa"; // Added dashboard icon
 import { Link, useNavigate } from "react-router-dom"; // Import Link and useNavigate
+
 
 const Home = () => {
   const [user, setUser] = useState(null);
@@ -17,7 +22,6 @@ const Home = () => {
   const handleLogin = async () => {
     try {
       const currentUser = await signInWithGoogle();
-
       if (currentUser) {
         const userData = {
           uid: currentUser.uid,
@@ -38,6 +42,7 @@ const Home = () => {
   const handleLogout = () => {
     sessionStorage.removeItem("user");
     setUser(null);
+
     navigate("/"); // Redirect to home page after logout
   };
 
@@ -110,37 +115,12 @@ const Home = () => {
         </button>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 bg-gray-100">
-        <div className="container px-4 mx-auto">
-          <h2 className="mb-10 text-3xl font-bold text-center">Our Features</h2>
-          <div className="grid gap-8 md:grid-cols-3">
-            <div className="p-6 text-center bg-white rounded-lg shadow-md">
-              <h3 className="mb-4 text-2xl font-semibold">
-                Personal Finance Management
-              </h3>
-              <p className="text-gray-700">
-                Store and track all your financial information in one place,
-                from bank accounts to investments.
-              </p>
-            </div>
-            <div className="p-6 text-center bg-white rounded-lg shadow-md">
-              <h3 className="mb-4 text-2xl font-semibold">Data Analysis</h3>
-              <p className="text-gray-700">
-                Analyze your spending habits, investment opportunities, and
-                receive personalized recommendations.
-              </p>
-            </div>
-            <div className="p-6 text-center bg-white rounded-lg shadow-md">
-              <h3 className="mb-4 text-2xl font-semibold">Monthly Reports</h3>
-              <p className="text-gray-700">
-                Receive monthly and annual financial reports to keep you
-                informed and on track.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+  return (
+    <div className="font-sans w-full">
+      <NavBar user={user} handleLogin={handleLogin} handleLogout={handleLogout} />
+      <Hero handleLogin={handleLogin} />
+      <FeaturesSection />
+      <Footer />
     </div>
   );
 };
