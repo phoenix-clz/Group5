@@ -1,15 +1,32 @@
-import React, { useContext } from "react";
+import { useState, useEffect } from "react";
 import { signInWithGoogle } from "../firebase-config";
-import UserContext from "../context/UserContext";
 
 const Home = () => {
-  const { user, setUser } = useContext(UserContext);
-  console.log('user: ', user);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const storedUser = sessionStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
 
   const handleLogin = async () => {
-    const loggedInUser = await signInWithGoogle();
-    if (loggedInUser) {
-      setUser(loggedInUser);
+    try {
+      const currentUser = await signInWithGoogle();
+
+      if (currentUser) {
+        const userData = {
+          uid: currentUser.uid,
+          email: currentUser.email,
+          displayName: currentUser.displayName,
+          photoURL: currentUser.photoURL,
+        };
+        sessionStorage.setItem("user", JSON.stringify(userData));
+        setUser(userData);
+      }
+    } catch (error) {
+      console.error("Error during login:", error);
     }
   };
 

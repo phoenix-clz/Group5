@@ -1,6 +1,5 @@
 import React, { useContext, useState } from "react";
-import { logout } from "../firebase-config";
-import UserContext from "../context/UserContext";
+import { auth, logout } from "../firebase-config";
 import { Line, Pie } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -26,12 +25,13 @@ ChartJS.register(
 );
 
 const Dashboard = () => {
-  const { user, setUser } = useContext(UserContext);
+  //get user from session
+  const user = JSON.parse(sessionStorage.getItem("user"));
+
   const [selectedPlatform, setSelectedPlatform] = useState("all");
 
   const handleLogout = async () => {
     await logout();
-    setUser(null);
     sessionStorage.removeItem("user");
   };
 

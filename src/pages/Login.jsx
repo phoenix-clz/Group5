@@ -1,10 +1,8 @@
-import React, { useContext } from 'react';
+import React, { useContext } from "react";
 import { signInWithGoogle } from "../firebase-config";
-import UserContext from '../context/UserContext';
 import { useNavigate } from "react-router-dom";
 
 const Login = () => {
-  const { setUser } = useContext(UserContext);
   const navigate = useNavigate();
 
   const handleLogin = async () => {
@@ -14,10 +12,10 @@ const Login = () => {
         uid: currentUser.uid,
         email: currentUser.email,
         displayName: currentUser.displayName,
-        photoURL: currentUser.photoURL
+        photoURL: currentUser.photoURL,
       };
-      setUser(userData);
-      sessionStorage.setItem('user', JSON.stringify(userData));
+      // Store user data in session storage
+      sessionStorage.setItem("user", JSON.stringify(userData));
       navigate("/dashboard");
     }
   };
