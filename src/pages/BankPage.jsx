@@ -233,7 +233,7 @@ const BankPage = () => {
             <div className="col-span-1 p-4 bg-white rounded-lg shadow md:col-span-2">
               <h2 className="mb-2 text-xl font-semibold">Total Balance</h2>
               <p className="text-3xl font-bold text-green-600">
-                ${totalAmount.toFixed(2)}
+                Rs. {totalAmount.toFixed(2)}
               </p>
             </div>
           </div>
@@ -247,7 +247,7 @@ const BankPage = () => {
                     <h3 className="text-xl font-semibold">{bank.name}</h3>
                     <button
                       onClick={() => toggleBankLink(bank.id)}
-                      className={`p-1 rounded ${
+                      className={`p-1 rounded Rs. {
                         bank.linked
                           ? "bg-red-500 text-white"
                           : "bg-green-500 text-white"
@@ -261,11 +261,11 @@ const BankPage = () => {
                     </button>
                   </div>
                   <p
-                    className={`text-2xl font-bold ${
+                    className={`text-2xl font-bold Rs. {
                       bank.linked ? "text-green-600" : "text-gray-400"
                     }`}
                   >
-                    ${bank.balance.toFixed(2)}
+                    Rs. {bank.balance.toFixed(2)}
                   </p>
                   <p className="text-sm text-gray-500">
                     {bank.linked ? "Linked" : "Unlinked"}
@@ -332,128 +332,6 @@ const BankPage = () => {
             <div>
               <h2 className="mb-4 text-2xl font-bold">Income vs Expenses</h2>
               <Bar data={barChartData} />
-            </div>
-          </div>
-
-          <div>
-            <h2 className="mb-4 text-2xl font-bold">Transactions</h2>
-            <div className="grid grid-cols-1 gap-4 mb-4 md:grid-cols-4">
-              <div>
-                <label htmlFor="bankFilter" className="block mb-1">
-                  Bank:
-                </label>
-                <select
-                  id="bankFilter"
-                  value={selectedBank}
-                  onChange={(e) => setSelectedBank(e.target.value)}
-                  className="w-full p-2 border rounded"
-                >
-                  <option value="all">All Banks</option>
-                  {banks
-                    .filter((bank) => bank.linked)
-                    .map((bank) => (
-                      <option key={bank.id} value={bank.id}>
-                        {bank.name}
-                      </option>
-                    ))}
-                </select>
-              </div>
-              <div>
-                <label htmlFor="typeFilter" className="block mb-1">
-                  Type:
-                </label>
-                <select
-                  id="typeFilter"
-                  value={transactionType}
-                  onChange={(e) => setTransactionType(e.target.value)}
-                  className="w-full p-2 border rounded"
-                >
-                  <option value="all">All Types</option>
-                  <option value="income">Income</option>
-                  <option value="expense">Expense</option>
-                </select>
-              </div>
-              <div>
-                <label className="block mb-1">Start Date:</label>
-                <DatePicker
-                  selected={startDate}
-                  onChange={(date) => setStartDate(date)}
-                  selectsStart
-                  startDate={startDate}
-                  endDate={endDate}
-                  className="w-full p-2 border rounded"
-                />
-              </div>
-              <div>
-                <label className="block mb-1">End Date:</label>
-                <DatePicker
-                  selected={endDate}
-                  onChange={(date) => setEndDate(date)}
-                  selectsEnd
-                  startDate={startDate}
-                  endDate={endDate}
-                  minDate={startDate}
-                  className="w-full p-2 border rounded"
-                />
-              </div>
-            </div>
-            <div className="overflow-hidden bg-white rounded-lg shadow">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                      Date
-                    </th>
-                    <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                      Bank
-                    </th>
-                    <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                      Description
-                    </th>
-                    <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                      Type
-                    </th>
-                    <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                      Amount
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredTransactions.map((transaction) => (
-                    <tr key={transaction.id}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {transaction.date}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {banks.find((b) => b.id === transaction.bankId)?.name}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {transaction.description}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            transaction.type === "income"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {transaction.type}
-                        </span>
-                      </td>
-                      <td
-                        className={`px-6 py-4 whitespace-nowrap font-medium ${
-                          transaction.type === "income"
-                            ? "text-green-600"
-                            : "text-red-600"
-                        }`}
-                      >
-                        ${Math.abs(transaction.amount).toFixed(2)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
           </div>
         </div>

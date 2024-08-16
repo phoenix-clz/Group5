@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { PlusCircleIcon, MinusCircleIcon } from "@heroicons/react/16/solid";
+import { useState, useEffect } from "react";
+import { MinusCircleIcon } from "@heroicons/react/16/solid";
 import Sidebar from "../components/Sidebar";
 import { DashNavbar } from "../components/DashNavbar";
 import {
@@ -113,12 +113,6 @@ const WalletPage = () => {
     fetchWallets();
   };
 
-  const updateWallet = async (walletId, newData) => {
-    const walletRef = doc(db, "wallets", walletId);
-    await updateDoc(walletRef, newData);
-    fetchWallets();
-  };
-
   const filteredWallets = wallets.filter((wallet) => {
     if (filter === "all") return true;
     if (filter === "high-balance") return wallet.balance >= 500;
@@ -165,7 +159,7 @@ const WalletPage = () => {
           <div className="p-4 mb-8 bg-white rounded-lg shadow">
             <h2 className="mb-2 text-xl font-semibold">Total Balance</h2>
             <p className="text-3xl font-bold text-green-600">
-              ${totalAmount.toFixed(2)}
+              Rs. {totalAmount.toFixed(2)}
             </p>
           </div>
 
@@ -202,7 +196,7 @@ const WalletPage = () => {
                     </button>
                   </div>
                   <p className="text-2xl font-bold text-green-600">
-                    ${wallet.balance.toFixed(2)}
+                    Rs. {wallet.balance.toFixed(2)}
                   </p>
                   <p className="text-sm text-gray-500">
                     Points: {wallet.points}

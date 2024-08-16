@@ -102,7 +102,7 @@ const Sidebar = () => {
                     name="subPlatform"
                     value={transactionDetails.subPlatform}
                     onChange={handleInputChange}
-                    placeholder={`Which ${transactionDetails.platform}?`}
+                    placeholder={`Which Rs. {transactionDetails.platform}?`}
                     className="w-full p-2 mb-2 border rounded"
                     required
                   />

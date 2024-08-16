@@ -127,7 +127,7 @@ const Dashboard = () => {
           <div className="p-6 mb-6 bg-white rounded-lg shadow-md">
             <h2 className="mb-4 text-2xl font-semibold">User Overview</h2>
             <p className="mb-2 text-3xl font-bold text-green-600">
-              ${totalAmount.toLocaleString()}
+              Rs. {totalAmount.toLocaleString()}
             </p>
             <p className="text-gray-600">Total Balance</p>
             <p className="mt-2">

@@ -46,7 +46,7 @@ const Login = () => {
       <button
         onClick={handleLogin}
         disabled={isLoading}
-        className={`px-6 py-2 text-white transition duration-200 bg-blue-500 rounded hover:bg-blue-600 ${
+        className={`px-6 py-2 text-white transition duration-200 bg-blue-500 rounded hover:bg-blue-600 Rs. {
           isLoading ? "opacity-50 cursor-not-allowed" : ""
         }`}
       >

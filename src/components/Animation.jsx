@@ -16,7 +16,7 @@ const FadeIn = ({ children, delay, direction, fullWidth, padding }) => {
   return (
     <div
       ref={ref}
-      className={`${fullWidth ? "w-full" : "w-auto"} ${
+      className={`${fullWidth ? "w-full" : "w-auto"} Rs. {
         padding ? "px-10" : "px-0"
       } flex items-center justify-center`}
     >

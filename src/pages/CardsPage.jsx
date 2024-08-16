@@ -247,7 +247,7 @@ const CardsPage = () => {
                     <h3 className="text-xl font-semibold">{card.bankName}</h3>
                     <button
                       onClick={() => toggleCardLink(card.id)}
-                      className={`p-1 rounded ${
+                      className={`p-1 rounded Rs. {
                         card.linked
                           ? "bg-red-500 text-white"
                           : "bg-green-500 text-white"
@@ -448,7 +448,7 @@ const CardsPage = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full Rs. {
                             transaction.type === "purchase"
                               ? "bg-red-100 text-red-800"
                               : "bg-green-100 text-green-800"
@@ -458,7 +458,7 @@ const CardsPage = () => {
                         </span>
                       </td>
                       <td
-                        className={`px-6 py-4 whitespace-nowrap font-medium ${
+                        className={`px-6 py-4 whitespace-nowrap font-medium Rs. {
                           transaction.type === "purchase"
                             ? "text-red-600"
                             : "text-green-600"
