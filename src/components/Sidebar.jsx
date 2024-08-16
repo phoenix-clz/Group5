@@ -38,6 +38,7 @@ const Sidebar = () => {
     { name: "Wallet", path: "/wallet" },
     { name: "Loan", path: "/loan" },
     { name: "Insurance", path: "/insurance" },
+    { name: "My Transactions", path: "/transaction" },
   ];
 
   useEffect(() => {
@@ -69,6 +70,29 @@ const Sidebar = () => {
     setUserPlatforms(platforms);
   };
 
+  const getSubPlatformName = (platform, subPlatformId) => {
+    const platformData = userPlatforms[platform];
+    const selectedPlatform = platformData.find(
+      (item) => item.id === subPlatformId
+    );
+
+    switch (platform) {
+      case "banks":
+      case "wallets":
+        return selectedPlatform?.name;
+      case "cards":
+        return `${
+          selectedPlatform?.bankName
+        } - **** ${selectedPlatform?.number.slice(-4)}`;
+      case "loans":
+        return `Loan of $${selectedPlatform?.amount} at ${selectedPlatform?.interestRate}%`;
+      case "insurances":
+        return `${selectedPlatform?.typeId} Insurance`;
+      default:
+        return "";
+    }
+  };
+
   const handleNewTransaction = () => {
     setShowPopup(true);
   };
@@ -97,8 +121,17 @@ const Sidebar = () => {
     const userId = auth.currentUser.uid;
 
     try {
+      let subPlatformName = transactionDetails.subPlatform;
+      if (transactionDetails.platform !== "cash") {
+        subPlatformName = getSubPlatformName(
+          transactionDetails.platform,
+          transactionDetails.subPlatform
+        );
+      }
+
       const newTransaction = {
         ...transactionDetails,
+        subPlatform: subPlatformName,
         userId,
         amount: parseFloat(transactionDetails.amount),
         date: new Date().toISOString(),
