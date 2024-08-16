@@ -1,5 +1,5 @@
-import React, { useContext, useState } from "react";
-import { auth, logout } from "../firebase-config";
+import { useState } from "react";
+import { logout } from "../firebase-config";
 import { Line, Pie } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -189,7 +189,7 @@ const Dashboard = () => {
             </div>
             <div className="p-6 bg-white rounded-lg shadow-md">
               <h3 className="mb-4 text-xl font-semibold">
-                Expense Distribution
+                Platform Distribution
               </h3>
               <Pie data={pieChartData} />
             </div>

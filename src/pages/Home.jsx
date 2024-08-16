@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
 import { signInWithGoogle } from "../firebase-config";
+import { FaSignOutAlt, FaTachometerAlt } from "react-icons/fa"; // Added dashboard icon
+import { Link, useNavigate } from "react-router-dom"; // Import Link and useNavigate
 
 const Home = () => {
   const [user, setUser] = useState(null);
+  const navigate = useNavigate(); // Hook for programmatic navigation
 
   useEffect(() => {
     const storedUser = sessionStorage.getItem("user");
@@ -30,36 +33,60 @@ const Home = () => {
     }
   };
 
+  const handleLogout = () => {
+    sessionStorage.removeItem("user");
+    setUser(null);
+    navigate("/"); // Redirect to home page after logout
+  };
+
   return (
     <div className="font-sans">
       {/* NavBar */}
       <header className="fixed w-full p-4 text-white bg-red-800">
         <nav className="flex items-center justify-between">
           <div className="text-2xl font-bold">Financial Literacy</div>
-          {user ? (
-            <div className="flex items-center">
-              {user.photoURL && (
+          <div className="flex items-center">
+            {user ? (
+              <>
+                <Link
+                  to="/dashboard"
+                  className="flex items-center mr-4 text-white transition-colors hover:text-gray-300"
+                >
+                  <FaTachometerAlt className="mr-2" />
+                  Dashboard
+                </Link>
+                <div className="flex items-center">
+                  {user.photoURL && (
+                    <img
+                      src={user.photoURL}
+                      alt="User Avatar"
+                      className="w-10 h-10 mr-2 rounded-full"
+                    />
+                  )}
+                  <span className="mr-2 text-white">{user.displayName}</span>
+                  <button
+                    onClick={handleLogout}
+                    className="text-white transition-colors hover:text-gray-300"
+                    title="Logout"
+                  >
+                    <FaSignOutAlt size={20} />
+                  </button>
+                </div>
+              </>
+            ) : (
+              <button
+                onClick={handleLogin}
+                className="flex items-center px-4 py-2 text-white bg-blue-500 rounded"
+              >
                 <img
-                  src={user.photoURL}
-                  alt="User Avatar"
-                  className="w-10 h-10 mr-2 rounded-full"
+                  src="https://static-00.iconduck.com/assets.00/google-icon-2048x2048-pks9lbdv.png"
+                  alt="Google Icon"
+                  className="w-5 h-5 mr-2"
                 />
-              )}
-              <span className="text-white">{user.displayName}</span>
-            </div>
-          ) : (
-            <button
-              onClick={handleLogin}
-              className="flex items-center px-4 py-2 text-white bg-blue-500 rounded"
-            >
-              <img
-                src="https://static-00.iconduck.com/assets.00/google-icon-2048x2048-pks9lbdv.png"
-                alt="Google Icon"
-                className="w-5 h-5 mr-2"
-              />
-              Login with Google
-            </button>
-          )}
+                Login with Google
+              </button>
+            )}
+          </div>
         </nav>
       </header>
 
