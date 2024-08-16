@@ -4,6 +4,7 @@ import Hero from "../components/Hero";
 import FeaturesSection from "../components/FeatureSection";
 import Footer from "../components/Footer";
 import NavBar from "../components/Navbar";
+import InvestmentSection from "../components/InvestmentSection";
 
 const Home = () => {
   const [user, setUser] = useState(null);
@@ -48,6 +49,7 @@ const Home = () => {
       />
       <Hero handleLogin={handleLogin} />
       <FeaturesSection />
+      <InvestmentSection/>
       <Footer />
     </div>
   );
