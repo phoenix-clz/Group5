@@ -27,6 +27,8 @@ const Home = () => {
         };
         sessionStorage.setItem("user", JSON.stringify(userData));
         setUser(userData);
+
+        navigate("/dashboard"); // Redirect to dashboard after login
       }
     } catch (error) {
       console.error("Error during login:", error);
@@ -44,7 +46,7 @@ const Home = () => {
       {/* NavBar */}
       <header className="fixed w-full p-4 text-white bg-red-800">
         <nav className="flex items-center justify-between">
-          <div className="text-2xl font-bold">Financial Literacy</div>
+          <div className="text-2xl font-bold">Smart Paisa</div>
           <div className="flex items-center">
             {user ? (
               <>

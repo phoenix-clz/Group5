@@ -28,11 +28,16 @@ const Dashboard = () => {
   //get user from session
   const user = JSON.parse(sessionStorage.getItem("user"));
 
+  if (!user) {
+    window.location.href = "/login";
+  }
+
   const [selectedPlatform, setSelectedPlatform] = useState("all");
 
   const handleLogout = async () => {
     await logout();
     sessionStorage.removeItem("user");
+    window.location.href = "/";
   };
 
   // Mock data - replace with actual data from your backend
@@ -115,7 +120,7 @@ const Dashboard = () => {
       <div className="w-64 bg-white shadow-md">
         <div className="p-4">
           <h2 className="text-2xl font-semibold text-gray-800">
-            Financial Literacy
+            Smart Paisa
           </h2>
         </div>
         <nav className="mt-4">
