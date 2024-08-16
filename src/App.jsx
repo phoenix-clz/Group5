@@ -4,6 +4,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import BankPage from "./pages/BankPage";
 import CardsPage from "./pages/CardsPage";
+import WalletPage from "./pages/WalletPage";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/bank" element={<BankPage />} />
         <Route path="/card" element={<CardsPage />} />
+        <Route path="/wallet" element={<WalletPage />} />
       </Routes>
     </Router>
   );

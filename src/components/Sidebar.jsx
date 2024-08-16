@@ -6,7 +6,6 @@ const Sidebar = () => {
     { name: "Bank", path: "/bank" },
     { name: "Card", path: "/card" },
     { name: "Wallet", path: "/wallet" },
-    { name: "Cash", path: "/cash" },
     { name: "Loan", path: "/loan" },
     { name: "Insurance", path: "/insurance" },
   ];
