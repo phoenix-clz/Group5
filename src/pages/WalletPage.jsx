@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { MinusCircleIcon } from "@heroicons/react/16/solid";
 import Sidebar from "../components/Sidebar";
-import {DashNavbar} from "../components/DashNavbar";
+import { DashNavbar } from "../components/DashNavbar";
 
 const WalletPage = () => {
   const [wallets, setWallets] = useState([]);
@@ -57,7 +57,7 @@ const WalletPage = () => {
     <div className="flex h-screen bg-gray-100">
       <Sidebar />
       <div className="flex-1 overflow-y-auto">
-        <Navbar />
+        <DashNavbar />
         <div className="container p-4 mx-auto">
           <h1 className="mb-6 text-3xl font-bold">Your Wallet Dashboard</h1>
 
