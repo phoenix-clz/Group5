@@ -19,6 +19,17 @@ import {
 } from "@heroicons/react/24/solid";
 import Sidebar from "../components/Sidebar";
 import { DashNavbar } from "../components/DashNavbar";
+import { db } from "../firebase-config";
+import {
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  query,
+  where,
+} from "firebase/firestore";
 
 ChartJS.register(
   ArcElement,
@@ -31,6 +42,7 @@ ChartJS.register(
 );
 
 const CardsPage = () => {
+  const [user, setUser] = useState(null);
   const [cards, setCards] = useState([]);
   const [banks, setBanks] = useState([]);
   const [transactions, setTransactions] = useState([]);
@@ -46,40 +58,35 @@ const CardsPage = () => {
   });
 
   useEffect(() => {
-    fetchCards();
-    fetchBanks();
-    fetchTransactions();
+    if (user && user.uid) {
+      fetchCards();
+      fetchBanks();
+      fetchTransactions();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    const storedUser = sessionStorage.getItem("user");
+    if (storedUser) {
+      const parsedUser = JSON.parse(storedUser);
+      if (parsedUser && parsedUser.uid) {
+        setUser(parsedUser);
+      } else {
+        console.error("User object is missing uid");
+      }
+    }
   }, []);
 
   const fetchCards = async () => {
-    // Replace with your API call
-    const mockedCards = [
-      {
-        id: 1,
-        bank: "Bank A",
-        number: "**** **** **** 1234",
-        expiryDate: "12/25",
-        cardholderName: "John Doe",
-        linked: true,
-      },
-      {
-        id: 2,
-        bank: "Bank B",
-        number: "**** **** **** 5678",
-        expiryDate: "06/24",
-        cardholderName: "Jane Smith",
-        linked: true,
-      },
-      {
-        id: 3,
-        bank: "Bank C",
-        number: "**** **** **** 9012",
-        expiryDate: "09/23",
-        cardholderName: "Bob Johnson",
-        linked: false,
-      },
-    ];
-    setCards(mockedCards);
+    if (!user || !user.uid) return;
+    const cardsCollection = collection(db, "cards");
+    const q = query(cardsCollection, where("userId", "==", user.uid));
+    const cardsSnapshot = await getDocs(q);
+    const cardsList = cardsSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    setCards(cardsList);
   };
 
   const fetchBanks = async () => {
@@ -93,64 +100,40 @@ const CardsPage = () => {
   };
 
   const fetchTransactions = async () => {
-    // Replace with your API call
-    const mockedTransactions = [
-      {
-        id: 1,
-        cardId: 1,
-        amount: 100,
-        type: "purchase",
-        description: "Groceries",
-        date: "2023-05-01",
-      },
-      {
-        id: 2,
-        cardId: 1,
-        amount: 50,
-        type: "purchase",
-        description: "Restaurant",
-        date: "2023-05-02",
-      },
-      {
-        id: 3,
-        cardId: 2,
-        amount: 200,
-        type: "purchase",
-        description: "Electronics",
-        date: "2023-05-03",
-      },
-      {
-        id: 4,
-        cardId: 2,
-        amount: 500,
-        type: "payment",
-        description: "Credit Card Payment",
-        date: "2023-05-04",
-      },
-    ];
-    setTransactions(mockedTransactions);
+    if (!user || !user.uid) return;
+    const transactionsCollection = collection(db, "transactions");
+    const q = query(transactionsCollection, where("userId", "==", user.uid));
+    const transactionsSnapshot = await getDocs(q);
+    const transactionsList = transactionsSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    setTransactions(transactionsList);
   };
 
-  const toggleCardLink = (cardId) => {
-    const updatedCards = cards.map((card) =>
-      card.id === cardId ? { ...card, linked: !card.linked } : card
-    );
-    setCards(updatedCards);
+  const toggleCardLink = async (cardId) => {
+    const cardRef = doc(db, "cards", cardId);
+    const card = cards.find((c) => c.id === cardId);
+    await updateDoc(cardRef, { linked: !card.linked });
+    fetchCards();
   };
 
-  const addNewCard = () => {
+  const addNewCard = async () => {
     if (
       newCardDetails.bank &&
       newCardDetails.number &&
       newCardDetails.expiryDate &&
-      newCardDetails.cardholderName
+      newCardDetails.cardholderName &&
+      user &&
+      user.uid
     ) {
       const newCard = {
-        id: cards.length + 1,
         ...newCardDetails,
         linked: true,
+        userId: user.uid,
       };
-      setCards([...cards, newCard]);
+      await addDoc(collection(db, "cards"), newCard);
+      fetchCards();
       setNewCardDetails({
         bank: "",
         number: "",
@@ -160,9 +143,9 @@ const CardsPage = () => {
     }
   };
 
-  const removeCard = (cardId) => {
-    const updatedCards = cards.filter((card) => card.id !== cardId);
-    setCards(updatedCards);
+  const removeCard = async (cardId) => {
+    await deleteDoc(doc(db, "cards", cardId));
+    fetchCards();
   };
 
   const filteredTransactions = transactions.filter((t) => {
@@ -216,6 +199,10 @@ const CardsPage = () => {
       return expiryDate <= fifteenDaysLater;
     });
   };
+
+  if (!user) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="flex h-screen bg-gray-100">

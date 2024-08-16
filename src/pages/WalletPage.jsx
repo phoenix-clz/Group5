@@ -1,7 +1,28 @@
 import React, { useState, useEffect } from "react";
-import { MinusCircleIcon } from "@heroicons/react/16/solid";
+import { PlusCircleIcon, MinusCircleIcon } from "@heroicons/react/16/solid";
 import Sidebar from "../components/Sidebar";
 import { DashNavbar } from "../components/DashNavbar";
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+} from "chart.js";
+import { Pie, Bar } from "react-chartjs-2";
+
+ChartJS.register(
+  ArcElement,
+  Tooltip,
+  Legend,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title
+);
 
 const WalletPage = () => {
   const [wallets, setWallets] = useState([]);
@@ -9,6 +30,7 @@ const WalletPage = () => {
   const [newWalletName, setNewWalletName] = useState("");
   const [newWalletBalance, setNewWalletBalance] = useState("");
   const [newWalletPoints, setNewWalletPoints] = useState("");
+  const [filter, setFilter] = useState("all");
 
   useEffect(() => {
     fetchWallets();
@@ -20,6 +42,7 @@ const WalletPage = () => {
       { id: 1, name: "eSewa", balance: 1000, points: 50 },
       { id: 2, name: "Khalti", balance: 500, points: 25 },
       { id: 3, name: "FonePay", balance: 750, points: 30 },
+      { id: 4, name: "IMEPay", balance: 300, points: 15 },
     ];
     setWallets(mockedWallets);
     calculateTotalAmount(mockedWallets);
@@ -53,6 +76,41 @@ const WalletPage = () => {
     calculateTotalAmount(updatedWallets);
   };
 
+  const filteredWallets = wallets.filter((wallet) => {
+    if (filter === "all") return true;
+    if (filter === "high-balance") return wallet.balance >= 500;
+    if (filter === "low-balance") return wallet.balance < 500;
+    return true;
+  });
+
+  const pieChartData = {
+    labels: wallets.map((wallet) => wallet.name),
+    datasets: [
+      {
+        data: wallets.map((wallet) => wallet.balance),
+        backgroundColor: [
+          "#FF6384",
+          "#36A2EB",
+          "#FFCE56",
+          "#4BC0C0",
+          "#9966FF",
+          "#FF9F40",
+        ],
+      },
+    ],
+  };
+
+  const barChartData = {
+    labels: wallets.map((wallet) => wallet.name),
+    datasets: [
+      {
+        label: "Points",
+        data: wallets.map((wallet) => wallet.points),
+        backgroundColor: "#36A2EB",
+      },
+    ],
+  };
+
   return (
     <div className="flex h-screen bg-gray-100">
       <Sidebar />
@@ -70,8 +128,23 @@ const WalletPage = () => {
 
           <div className="mb-8">
             <h2 className="mb-4 text-2xl font-bold">Your Wallets</h2>
+            <div className="mb-4">
+              <label htmlFor="filter" className="mr-2">
+                Filter:
+              </label>
+              <select
+                id="filter"
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                className="p-2 border rounded"
+              >
+                <option value="all">All Wallets</option>
+                <option value="high-balance">High Balance (≥$500)</option>
+                <option value="low-balance">Low Balance (&lt;$500)</option>
+              </select>
+            </div>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              {wallets.map((wallet) => (
+              {filteredWallets.map((wallet) => (
                 <div key={wallet.id} className="p-4 bg-white rounded-lg shadow">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-xl font-semibold">{wallet.name}</h3>
@@ -123,6 +196,43 @@ const WalletPage = () => {
               >
                 Add Wallet
               </button>
+            </div>
+          </div>
+
+          <div className="mb-8">
+            <h2 className="mb-4 text-2xl font-bold">Wallet Analytics</h2>
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+              <div className="p-4 bg-white rounded-lg shadow">
+                <h3 className="mb-4 text-xl font-semibold">
+                  Balance Distribution
+                </h3>
+                <div style={{ height: "300px" }}>
+                  <Pie
+                    data={pieChartData}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="p-4 bg-white rounded-lg shadow">
+                <h3 className="mb-4 text-xl font-semibold">Points by Wallet</h3>
+                <div style={{ height: "300px" }}>
+                  <Bar
+                    data={barChartData}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      scales: {
+                        y: {
+                          beginAtZero: true,
+                        },
+                      },
+                    }}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
