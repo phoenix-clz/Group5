@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { logout } from "../firebase-config";
 import { Line, Pie } from "react-chartjs-2";
+import { useNavigate } from "react-router-dom";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -12,6 +12,8 @@ import {
   Legend,
   ArcElement,
 } from "chart.js";
+import Sidebar from "../components/Sidebar";
+import { Navbar } from "../components/Navbar";
 
 ChartJS.register(
   CategoryScale,
@@ -25,20 +27,15 @@ ChartJS.register(
 );
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   //get user from session
   const user = JSON.parse(sessionStorage.getItem("user"));
 
   if (!user) {
-    window.location.href = "/login";
+    navigate("/login");
   }
 
   const [selectedPlatform, setSelectedPlatform] = useState("all");
-
-  const handleLogout = async () => {
-    await logout();
-    sessionStorage.removeItem("user");
-    window.location.href = "/";
-  };
 
   // Mock data - replace with actual data from your backend
   const totalAmount = 50000;
@@ -117,55 +114,12 @@ const Dashboard = () => {
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
-      <div className="w-64 bg-white shadow-md">
-        <div className="p-4">
-          <h2 className="text-2xl font-semibold text-gray-800">
-            Smart Paisa
-          </h2>
-        </div>
-        <nav className="mt-4">
-          {[
-            "Dashboard",
-            "Bank",
-            "Card",
-            "Wallet",
-            "Cash",
-            "Loan",
-            "Insurance",
-          ].map((item) => (
-            <a
-              key={item}
-              href="#"
-              className="block px-4 py-2 text-gray-700 hover:bg-gray-200"
-            >
-              {item}
-            </a>
-          ))}
-        </nav>
-      </div>
+      <Sidebar />
 
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto">
         {/* Navbar */}
-        <nav className="flex items-center justify-between p-4 bg-white shadow-md">
-          <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
-          {user && (
-            <div className="flex items-center">
-              <img
-                src={user.photoURL}
-                alt="User"
-                className="w-8 h-8 mr-2 rounded-full"
-              />
-              <span className="mr-4">{user.displayName}</span>
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 text-white bg-red-500 rounded"
-              >
-                Logout
-              </button>
-            </div>
-          )}
-        </nav>
+        <Navbar />
 
         {/* Dashboard Content */}
         <div className="p-6">
