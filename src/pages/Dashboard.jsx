@@ -1,31 +1,258 @@
-import React, { useContext } from 'react';
-import { logout } from '../firebase-config';
-import UserContext from '../context/UserContext';
+import React, { useContext, useState } from "react";
+import { logout } from "../firebase-config";
+import UserContext from "../context/UserContext";
+import { Line, Pie } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement,
+} from "chart.js";
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement
+);
 
 const Dashboard = () => {
   const { user, setUser } = useContext(UserContext);
+  const [selectedPlatform, setSelectedPlatform] = useState("all");
 
   const handleLogout = async () => {
     await logout();
     setUser(null);
-    sessionStorage.removeItem('user');
+    sessionStorage.removeItem("user");
+  };
+
+  // Mock data - replace with actual data from your backend
+  const totalAmount = 50000;
+  const verifiedStatus = true;
+  const transactions = [
+    {
+      id: 1,
+      amount: 100,
+      type: "credit",
+      platform: "bank",
+      date: "2023-05-01",
+      details: "Salary",
+    },
+    {
+      id: 2,
+      amount: 50,
+      type: "debit",
+      platform: "card",
+      date: "2023-05-02",
+      details: "Groceries",
+    },
+    {
+      id: 3,
+      amount: 200,
+      type: "credit",
+      platform: "wallet",
+      date: "2023-05-03",
+      details: "Refund",
+    },
+    // ... more transactions
+  ];
+
+  const filteredTransactions =
+    selectedPlatform === "all"
+      ? transactions
+      : transactions.filter((t) => t.platform === selectedPlatform);
+
+  const lineChartData = {
+    labels: ["January", "February", "March", "April", "May", "June"],
+    datasets: [
+      {
+        label: "Monthly Expenses",
+        data: [1000, 1500, 1200, 1800, 2000, 1700],
+        borderColor: "rgb(75, 192, 192)",
+        tension: 0.1,
+      },
+    ],
+  };
+
+  const pieChartData = {
+    labels: ["Bank", "Card", "Wallet", "Cash", "Loan", "Insurance"],
+    datasets: [
+      {
+        data: [300, 50, 100, 200, 150, 100],
+        backgroundColor: [
+          "rgba(255, 99, 132, 0.2)",
+          "rgba(54, 162, 235, 0.2)",
+          "rgba(255, 206, 86, 0.2)",
+          "rgba(75, 192, 192, 0.2)",
+          "rgba(153, 102, 255, 0.2)",
+          "rgba(255, 159, 64, 0.2)",
+        ],
+        borderColor: [
+          "rgba(255, 99, 132, 1)",
+          "rgba(54, 162, 235, 1)",
+          "rgba(255, 206, 86, 1)",
+          "rgba(75, 192, 192, 1)",
+          "rgba(153, 102, 255, 1)",
+          "rgba(255, 159, 64, 1)",
+        ],
+        borderWidth: 1,
+      },
+    ],
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen">
-      {user ? (
-        <>
-          <h1 className="mb-4 text-3xl">Welcome, {user.displayName}!</h1>
-          <button
-            onClick={handleLogout}
-            className="px-6 py-2 text-white transition duration-200 bg-red-500 rounded hover:bg-red-600"
-          >
-            Logout
-          </button>
-        </>
-      ) : (
-        <h2 className="text-xl">Please log in.</h2>
-      )}
+    <div className="flex h-screen bg-gray-100">
+      {/* Sidebar */}
+      <div className="w-64 bg-white shadow-md">
+        <div className="p-4">
+          <h2 className="text-2xl font-semibold text-gray-800">
+            Financial Literacy
+          </h2>
+        </div>
+        <nav className="mt-4">
+          {[
+            "Dashboard",
+            "Bank",
+            "Card",
+            "Wallet",
+            "Cash",
+            "Loan",
+            "Insurance",
+          ].map((item) => (
+            <a
+              key={item}
+              href="#"
+              className="block px-4 py-2 text-gray-700 hover:bg-gray-200"
+            >
+              {item}
+            </a>
+          ))}
+        </nav>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Navbar */}
+        <nav className="flex items-center justify-between p-4 bg-white shadow-md">
+          <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
+          {user && (
+            <div className="flex items-center">
+              <img
+                src={user.photoURL}
+                alt="User"
+                className="w-8 h-8 mr-2 rounded-full"
+              />
+              <span className="mr-4">{user.displayName}</span>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 text-white bg-red-500 rounded"
+              >
+                Logout
+              </button>
+            </div>
+          )}
+        </nav>
+
+        {/* Dashboard Content */}
+        <div className="p-6">
+          {/* User Overview Card */}
+          <div className="p-6 mb-6 bg-white rounded-lg shadow-md">
+            <h2 className="mb-4 text-2xl font-semibold">User Overview</h2>
+            <p className="mb-2 text-3xl font-bold text-green-600">
+              ${totalAmount.toLocaleString()}
+            </p>
+            <p className="text-gray-600">Total Balance</p>
+            <p className="mt-2">
+              Verification Status:
+              <span
+                className={verifiedStatus ? "text-green-500" : "text-red-500"}
+              >
+                {verifiedStatus ? " Verified" : " Not Verified"}
+              </span>
+            </p>
+          </div>
+
+          {/* Charts */}
+          <div className="grid grid-cols-1 gap-6 mb-6 md:grid-cols-2">
+            <div className="p-6 bg-white rounded-lg shadow-md">
+              <h3 className="mb-4 text-xl font-semibold">Monthly Expenses</h3>
+              <Line data={lineChartData} />
+            </div>
+            <div className="p-6 bg-white rounded-lg shadow-md">
+              <h3 className="mb-4 text-xl font-semibold">
+                Expense Distribution
+              </h3>
+              <Pie data={pieChartData} />
+            </div>
+          </div>
+
+          {/* Transactions Table */}
+          <div className="p-6 bg-white rounded-lg shadow-md">
+            <h3 className="mb-4 text-xl font-semibold">Recent Transactions</h3>
+            <div className="mb-4">
+              <label htmlFor="platform-filter" className="mr-2">
+                Filter by Platform:
+              </label>
+              <select
+                id="platform-filter"
+                value={selectedPlatform}
+                onChange={(e) => setSelectedPlatform(e.target.value)}
+                className="px-2 py-1 border rounded"
+              >
+                <option value="all">All</option>
+                <option value="bank">Bank</option>
+                <option value="card">Card</option>
+                <option value="wallet">Wallet</option>
+                <option value="cash">Cash</option>
+                <option value="loan">Loan</option>
+                <option value="insurance">Insurance</option>
+              </select>
+            </div>
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-200">
+                  <th className="p-2 text-left">Amount</th>
+                  <th className="p-2 text-left">Type</th>
+                  <th className="p-2 text-left">Platform</th>
+                  <th className="p-2 text-left">Date</th>
+                  <th className="p-2 text-left">Details</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredTransactions.map((transaction) => (
+                  <tr key={transaction.id} className="border-b">
+                    <td className="p-2">
+                      <span
+                        className={
+                          transaction.type === "credit"
+                            ? "text-green-500"
+                            : "text-red-500"
+                        }
+                      >
+                        {transaction.type === "credit" ? "+" : "-"}$
+                        {transaction.amount}
+                      </span>
+                    </td>
+                    <td className="p-2 capitalize">{transaction.type}</td>
+                    <td className="p-2 capitalize">{transaction.platform}</td>
+                    <td className="p-2">{transaction.date}</td>
+                    <td className="p-2">{transaction.details}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
