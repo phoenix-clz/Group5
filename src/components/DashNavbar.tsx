@@ -1,6 +1,7 @@
 import React from "react";
 import { logout } from "../firebase-config";
 import { useNavigate } from "react-router-dom";
+import { FaUserCircle } from "react-icons/fa"; // Import the icon
 
 export const DashNavbar = ({ onMenuClick }) => {
   const user = JSON.parse(sessionStorage.getItem("user"));
@@ -14,7 +15,7 @@ export const DashNavbar = ({ onMenuClick }) => {
 
   return (
     <nav className="bg-white shadow-md">
-      <div className="px-4 mx-auto w-full sm:px-6 lg:px-8">
+      <div className="w-full px-4 mx-auto sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
             <button
@@ -38,7 +39,9 @@ export const DashNavbar = ({ onMenuClick }) => {
               </svg>
             </button>
           </div>
-          <div className="flex items-center ml-auto"> {/* Use ml-auto to push this container to the right */}
+          <div className="flex items-center ml-auto">
+            {" "}
+            {/* Use ml-auto to push this container to the right */}
             {user && (
               <>
                 <img
@@ -46,7 +49,10 @@ export const DashNavbar = ({ onMenuClick }) => {
                   alt="User"
                   className="w-8 h-8 mr-2 rounded-full"
                 />
-                <span className="hidden mr-4 md:inline">{user.displayName}</span>
+                <span className="flex items-center hidden mr-4 md:inline">
+                  <FaUserCircle className="mr-1" /> {/* Add the icon here */}
+                  {user.displayName}
+                </span>
                 <button
                   onClick={handleLogout}
                   className="px-4 py-2 text-white bg-red-500 rounded"
