@@ -47,6 +47,7 @@ const InsurancePage = () => {
   const [newInsuranceSubtype, setNewInsuranceSubtype] = useState("");
   const [newInsurancePremium, setNewInsurancePremium] = useState("");
   const [newInsuranceTerm, setNewInsuranceTerm] = useState("");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [newInsuranceStartDate, setNewInsuranceStartDate] = useState(
     new Date()
   );
@@ -279,175 +280,189 @@ const InsurancePage = () => {
   }
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      <Sidebar />
-      <div className="flex-1 overflow-y-auto">
-        <DashNavbar />
-        <div className="container p-4 mx-auto">
-          <h1 className="mb-6 text-3xl font-bold">Your Insurance Dashboard</h1>
+    <div className="flex flex-col h-screen bg-gray-100 md:flex-row">
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      <div className="flex flex-col flex-1 overflow-hidden">
+        <DashNavbar onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-200">
+          <div className="container px-6 py-8 mx-auto">
+            <div className="container p-4 mx-auto">
+              <h1 className="mb-6 text-3xl font-bold">
+                Your Insurance Dashboard
+              </h1>
 
-          {upcomingPayments.length > 0 && (
-            <div className="p-4 mb-6 text-white bg-blue-500 rounded-lg">
-              <h2 className="mb-2 text-xl font-semibold">
-                Upcoming Premium Payments
-              </h2>
-              {upcomingPayments.map((payment, index) => (
-                <div key={index} className="mb-2">
-                  <p>{payment.insuranceName}</p>
-                  <p>Date: {payment.date.toLocaleDateString()}</p>
-                  <p>Amount: Rs. {payment.amount.toFixed(2)}</p>
+              {upcomingPayments.length > 0 && (
+                <div className="p-4 mb-6 text-white bg-blue-500 rounded-lg">
+                  <h2 className="mb-2 text-xl font-semibold">
+                    Upcoming Premium Payments
+                  </h2>
+                  {upcomingPayments.map((payment, index) => (
+                    <div key={index} className="mb-2">
+                      <p>{payment.insuranceName}</p>
+                      <p>Date: {payment.date.toLocaleDateString()}</p>
+                      <p>Amount: Rs. {payment.amount.toFixed(2)}</p>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
+              )}
 
-          <div className="grid grid-cols-1 gap-4 mb-8 md:grid-cols-2">
-            <div className="p-4 bg-white rounded-lg shadow">
-              <h2 className="mb-2 text-xl font-semibold">
-                Total Premium Amount
-              </h2>
-              <p className="text-3xl font-bold text-blue-600">
-                Rs. {totalPremium.toFixed(2)}
-              </p>
-            </div>
-            <div className="p-4 bg-white rounded-lg shadow">
-              <h2 className="mb-2 text-xl font-semibold">Total Paid</h2>
-              <p className="text-3xl font-bold text-green-600">
-                Rs. {totalPaid.toFixed(2)}
-              </p>
-            </div>
-          </div>
+              <div className="grid grid-cols-1 gap-4 mb-8 md:grid-cols-2">
+                <div className="p-4 bg-white rounded-lg shadow">
+                  <h2 className="mb-2 text-xl font-semibold">
+                    Total Premium Amount
+                  </h2>
+                  <p className="text-3xl font-bold text-blue-600">
+                    Rs. {totalPremium.toFixed(2)}
+                  </p>
+                </div>
+                <div className="p-4 bg-white rounded-lg shadow">
+                  <h2 className="mb-2 text-xl font-semibold">Total Paid</h2>
+                  <p className="text-3xl font-bold text-green-600">
+                    Rs. {totalPaid.toFixed(2)}
+                  </p>
+                </div>
+              </div>
 
-          <div className="mb-8">
-            <h2 className="mb-4 text-2xl font-bold">Insurance Details</h2>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {insurances.map((insurance) => (
-                <div
-                  key={insurance.id}
-                  className="p-4 bg-white rounded-lg shadow"
-                >
-                  <h3 className="mb-2 text-xl font-semibold">
-                    {insuranceTypes.find((type) => type.id === insurance.typeId)
-                      ?.name || "Unknown"}
-                  </h3>
-                  <p>
-                    Subtype:{" "}
-                    {insuranceSubtypes[insurance.typeId]?.find(
-                      (subtype) => subtype.id === insurance.subtypeId
-                    )?.name || "Unknown"}
-                  </p>
-                  <p>Premium: Rs. {insurance.premium.toFixed(2)}</p>
-                  <p>Paid Amount: Rs. {insurance.paidAmount.toFixed(2)}</p>
-                  <p>Term: {insurance.term} years</p>
-                  <p>Start Date: {insurance.startDate.toLocaleDateString()}</p>
-                  <p>
-                    Maturity Date: {insurance.maturityDate.toLocaleDateString()}
-                  </p>
-                  <p>
-                    Next Payment:{" "}
-                    {insurance.nextPaymentDate.toLocaleDateString()}
-                  </p>
-                  <p>Fine: Rs. {insurance.fine.toFixed(2)}</p>
-                  <p>Rate: {insurance.rate}%</p>
-                  <p>
-                    Total Return Amount: Rs.{" "}
-                    {insurance.totalReturnAmount.toFixed(2)}
-                  </p>
-                  <button
-                    onClick={() => removeInsurance(insurance.id)}
-                    className="px-2 py-1 mt-2 text-sm text-white bg-red-500 rounded"
+              <div className="mb-8">
+                <h2 className="mb-4 text-2xl font-bold">Insurance Details</h2>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {insurances.map((insurance) => (
+                    <div
+                      key={insurance.id}
+                      className="p-4 bg-white rounded-lg shadow"
+                    >
+                      <h3 className="mb-2 text-xl font-semibold">
+                        {insuranceTypes.find(
+                          (type) => type.id === insurance.typeId
+                        )?.name || "Unknown"}
+                      </h3>
+                      <p>
+                        Subtype:{" "}
+                        {insuranceSubtypes[insurance.typeId]?.find(
+                          (subtype) => subtype.id === insurance.subtypeId
+                        )?.name || "Unknown"}
+                      </p>
+                      <p>Premium: Rs. {insurance.premium.toFixed(2)}</p>
+                      <p>Paid Amount: Rs. {insurance.paidAmount.toFixed(2)}</p>
+                      <p>Term: {insurance.term} years</p>
+                      <p>
+                        Start Date: {insurance.startDate.toLocaleDateString()}
+                      </p>
+                      <p>
+                        Maturity Date:{" "}
+                        {insurance.maturityDate.toLocaleDateString()}
+                      </p>
+                      <p>
+                        Next Payment:{" "}
+                        {insurance.nextPaymentDate.toLocaleDateString()}
+                      </p>
+                      <p>Fine: Rs. {insurance.fine.toFixed(2)}</p>
+                      <p>Rate: {insurance.rate}%</p>
+                      <p>
+                        Total Return Amount: Rs.{" "}
+                        {insurance.totalReturnAmount.toFixed(2)}
+                      </p>
+                      <button
+                        onClick={() => removeInsurance(insurance.id)}
+                        className="px-2 py-1 mt-2 text-sm text-white bg-red-500 rounded"
+                      >
+                        Remove Insurance
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mb-8">
+                <h2 className="mb-4 text-2xl font-bold">Add New Insurance</h2>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  <select
+                    value={newInsuranceType}
+                    onChange={(e) => setNewInsuranceType(e.target.value)}
+                    className="p-2 border rounded"
                   >
-                    Remove Insurance
+                    <option value="">Select Insurance Type</option>
+                    {insuranceTypes.map((type) => (
+                      <option key={type.id} value={type.id}>
+                        {type.name}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={newInsuranceSubtype}
+                    onChange={(e) => setNewInsuranceSubtype(e.target.value)}
+                    className="p-2 border rounded"
+                    disabled={!newInsuranceType}
+                  >
+                    <option value="">Select Insurance Subtype</option>
+                    {newInsuranceType &&
+                      insuranceSubtypes[newInsuranceType].map((subtype) => (
+                        <option key={subtype.id} value={subtype.id}>
+                          {subtype.name}
+                        </option>
+                      ))}
+                  </select>
+                  <input
+                    type="number"
+                    value={newInsurancePremium}
+                    onChange={(e) => setNewInsurancePremium(e.target.value)}
+                    placeholder="Premium Amount"
+                    className="p-2 border rounded"
+                  />
+                  <input
+                    type="number"
+                    value={newInsuranceTerm}
+                    onChange={(e) => setNewInsuranceTerm(e.target.value)}
+                    placeholder="Term (years)"
+                    className="p-2 border rounded"
+                  />
+                  <DatePicker
+                    selected={newInsuranceStartDate}
+                    onChange={(date) => setNewInsuranceStartDate(date)}
+                    className="p-2 border rounded"
+                    placeholderText="Start Date"
+                  />
+                  <input
+                    type="number"
+                    value={newInsuranceRate}
+                    onChange={(e) => setNewInsuranceRate(e.target.value)}
+                    placeholder="Rate (%)"
+                    className="p-2 border rounded"
+                  />
+                  <button
+                    onClick={addNewInsurance}
+                    className="px-4 py-2 text-white bg-green-500 rounded"
+                  >
+                    Add Insurance
                   </button>
                 </div>
-              ))}
-            </div>
-          </div>
+              </div>
 
-          <div className="mb-8">
-            <h2 className="mb-4 text-2xl font-bold">Add New Insurance</h2>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              <select
-                value={newInsuranceType}
-                onChange={(e) => setNewInsuranceType(e.target.value)}
-                className="p-2 border rounded"
-              >
-                <option value="">Select Insurance Type</option>
-                {insuranceTypes.map((type) => (
-                  <option key={type.id} value={type.id}>
-                    {type.name}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={newInsuranceSubtype}
-                onChange={(e) => setNewInsuranceSubtype(e.target.value)}
-                className="p-2 border rounded"
-                disabled={!newInsuranceType}
-              >
-                <option value="">Select Insurance Subtype</option>
-                {newInsuranceType &&
-                  insuranceSubtypes[newInsuranceType].map((subtype) => (
-                    <option key={subtype.id} value={subtype.id}>
-                      {subtype.name}
-                    </option>
-                  ))}
-              </select>
-              <input
-                type="number"
-                value={newInsurancePremium}
-                onChange={(e) => setNewInsurancePremium(e.target.value)}
-                placeholder="Premium Amount"
-                className="p-2 border rounded"
-              />
-              <input
-                type="number"
-                value={newInsuranceTerm}
-                onChange={(e) => setNewInsuranceTerm(e.target.value)}
-                placeholder="Term (years)"
-                className="p-2 border rounded"
-              />
-              <DatePicker
-                selected={newInsuranceStartDate}
-                onChange={(date) => setNewInsuranceStartDate(date)}
-                className="p-2 border rounded"
-                placeholderText="Start Date"
-              />
-              <input
-                type="number"
-                value={newInsuranceRate}
-                onChange={(e) => setNewInsuranceRate(e.target.value)}
-                placeholder="Rate (%)"
-                className="p-2 border rounded"
-              />
-              <button
-                onClick={addNewInsurance}
-                className="px-4 py-2 text-white bg-green-500 rounded"
-              >
-                Add Insurance
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-8 mb-8 md:grid-cols-2">
-            <div>
-              <h2 className="mb-4 text-2xl font-bold">Insurance Overview</h2>
-              <div style={{ width: "300px", height: "300px" }}>
-                <Pie
-                  data={pieChartData}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                  }}
-                />
+              <div className="grid grid-cols-1 gap-8 mb-8 md:grid-cols-2">
+                <div>
+                  <h2 className="mb-4 text-2xl font-bold">
+                    Insurance Overview
+                  </h2>
+                  <div style={{ width: "300px", height: "300px" }}>
+                    <Pie
+                      data={pieChartData}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                      }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <h2 className="mb-4 text-2xl font-bold">
+                    Insurance Comparison
+                  </h2>
+                  <Bar data={barChartData} />
+                </div>
               </div>
             </div>
-            <div>
-              <h2 className="mb-4 text-2xl font-bold">Insurance Comparison</h2>
-              <Bar data={barChartData} />
-            </div>
           </div>
-        </div>
+        </main>
       </div>
     </div>
   );

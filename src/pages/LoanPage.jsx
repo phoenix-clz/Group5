@@ -50,6 +50,7 @@ const LoanPage = () => {
   const [newLoanInterestRate, setNewLoanInterestRate] = useState("");
   const [newLoanTerm, setNewLoanTerm] = useState("");
   const [newLoanStartDate, setNewLoanStartDate] = useState(new Date());
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     const storedUser = sessionStorage.getItem("user");
@@ -227,147 +228,161 @@ const LoanPage = () => {
   }
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      <Sidebar />
-      <div className="flex-1 overflow-y-auto">
-        <DashNavbar />
-        <div className="container p-4 mx-auto">
-          <h1 className="mb-6 text-3xl font-bold">Your Loan Dashboard</h1>
+    <div className="flex flex-col h-screen bg-gray-100 md:flex-row">
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      <div className="flex flex-col flex-1 overflow-hidden">
+        <DashNavbar onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-200">
+          <div className="container px-6 py-8 mx-auto">
+            <div className="container p-4 mx-auto">
+              <h1 className="mb-6 text-3xl font-bold">Your Loan Dashboard</h1>
 
-          {nextPaymentDate && (
-            <div className="p-4 mb-6 text-white bg-blue-500 rounded-lg">
-              <h2 className="text-xl font-semibold">Next Payment Due</h2>
-              <p>Date: {nextPaymentDate.toLocaleDateString()}</p>
-              <p>Amount: Rs. {nextPaymentAmount.toFixed(2)}</p>
-            </div>
-          )}
+              {nextPaymentDate && (
+                <div className="p-4 mb-6 text-white bg-blue-500 rounded-lg">
+                  <h2 className="text-xl font-semibold">Next Payment Due</h2>
+                  <p>Date: {nextPaymentDate.toLocaleDateString()}</p>
+                  <p>Amount: Rs. {nextPaymentAmount.toFixed(2)}</p>
+                </div>
+              )}
 
-          <div className="grid grid-cols-1 gap-4 mb-8 md:grid-cols-3">
-            <div className="p-4 bg-white rounded-lg shadow">
-              <h2 className="mb-2 text-xl font-semibold">Total Loan Amount</h2>
-              <p className="text-3xl font-bold text-red-600">
-                Rs. {totalLoanAmount.toFixed(2)}
-              </p>
-            </div>
-            <div className="p-4 bg-white rounded-lg shadow">
-              <h2 className="mb-2 text-xl font-semibold">Total Paid</h2>
-              <p className="text-3xl font-bold text-green-600">
-                Rs. {totalPaid.toFixed(2)}
-              </p>
-            </div>
-            <div className="p-4 bg-white rounded-lg shadow">
-              <h2 className="mb-2 text-xl font-semibold">Total Remaining</h2>
-              <p className="text-3xl font-bold text-orange-600">
-                Rs. {totalRemaining.toFixed(2)}
-              </p>
-            </div>
-          </div>
+              <div className="grid grid-cols-1 gap-4 mb-8 md:grid-cols-3">
+                <div className="p-4 bg-white rounded-lg shadow">
+                  <h2 className="mb-2 text-xl font-semibold">
+                    Total Loan Amount
+                  </h2>
+                  <p className="text-3xl font-bold text-red-600">
+                    Rs. {totalLoanAmount.toFixed(2)}
+                  </p>
+                </div>
+                <div className="p-4 bg-white rounded-lg shadow">
+                  <h2 className="mb-2 text-xl font-semibold">Total Paid</h2>
+                  <p className="text-3xl font-bold text-green-600">
+                    Rs. {totalPaid.toFixed(2)}
+                  </p>
+                </div>
+                <div className="p-4 bg-white rounded-lg shadow">
+                  <h2 className="mb-2 text-xl font-semibold">
+                    Total Remaining
+                  </h2>
+                  <p className="text-3xl font-bold text-orange-600">
+                    Rs. {totalRemaining.toFixed(2)}
+                  </p>
+                </div>
+              </div>
 
-          <div className="mb-8">
-            <h2 className="mb-4 text-2xl font-bold">Loan Details</h2>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {loans.map((loan) => {
-                const bank = banks.find((b) => b.id === loan.bankId);
-                return (
-                  <div key={loan.id} className="p-4 bg-white rounded-lg shadow">
-                    <h3 className="mb-2 text-xl font-semibold">
-                      {bank ? bank.name : "Unknown Bank"}
-                    </h3>
-                    <p>Loan Amount: Rs. {loan.amount.toFixed(2)}</p>
-                    <p>Paid Amount: Rs. {loan.paidAmount.toFixed(2)}</p>
-                    <p>
-                      Remaining: Rs.{" "}
-                      {(loan.amount - loan.paidAmount).toFixed(2)}
-                    </p>
-                    <p>Interest Rate: {loan.interestRate}%</p>
-                    <p>Term: {loan.term} years</p>
-                    <p>Monthly Payment: Rs. {loan.monthlyPayment.toFixed(2)}</p>
-                    <p>Start Date: {loan.startDate.toLocaleDateString()}</p>
-                    <p>
-                      Next Payment: {loan.nextPaymentDate.toLocaleDateString()}
-                    </p>
-                    <button
-                      onClick={() => removeLoan(loan.id)}
-                      className="px-2 py-1 mt-2 text-sm text-white bg-red-500 rounded"
-                    >
-                      Remove Loan
-                    </button>
+              <div className="mb-8">
+                <h2 className="mb-4 text-2xl font-bold">Loan Details</h2>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {loans.map((loan) => {
+                    const bank = banks.find((b) => b.id === loan.bankId);
+                    return (
+                      <div
+                        key={loan.id}
+                        className="p-4 bg-white rounded-lg shadow"
+                      >
+                        <h3 className="mb-2 text-xl font-semibold">
+                          {bank ? bank.name : "Unknown Bank"}
+                        </h3>
+                        <p>Loan Amount: Rs. {loan.amount.toFixed(2)}</p>
+                        <p>Paid Amount: Rs. {loan.paidAmount.toFixed(2)}</p>
+                        <p>
+                          Remaining: Rs.{" "}
+                          {(loan.amount - loan.paidAmount).toFixed(2)}
+                        </p>
+                        <p>Interest Rate: {loan.interestRate}%</p>
+                        <p>Term: {loan.term} years</p>
+                        <p>
+                          Monthly Payment: Rs. {loan.monthlyPayment.toFixed(2)}
+                        </p>
+                        <p>Start Date: {loan.startDate.toLocaleDateString()}</p>
+                        <p>
+                          Next Payment:{" "}
+                          {loan.nextPaymentDate.toLocaleDateString()}
+                        </p>
+                        <button
+                          onClick={() => removeLoan(loan.id)}
+                          className="px-2 py-1 mt-2 text-sm text-white bg-red-500 rounded"
+                        >
+                          Remove Loan
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="mb-8">
+                <h2 className="mb-4 text-2xl font-bold">Add New Loan</h2>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  <input
+                    type="number"
+                    value={newLoanAmount}
+                    onChange={(e) => setNewLoanAmount(e.target.value)}
+                    placeholder="Loan Amount"
+                    className="p-2 border rounded"
+                  />
+                  <select
+                    value={newLoanBank}
+                    onChange={(e) => setNewLoanBank(e.target.value)}
+                    className="p-2 border rounded"
+                  >
+                    <option value="">Select a bank</option>
+                    {banks.map((bank) => (
+                      <option key={bank.id} value={bank.id}>
+                        {bank.name}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="number"
+                    value={newLoanInterestRate}
+                    onChange={(e) => setNewLoanInterestRate(e.target.value)}
+                    placeholder="Interest Rate (%)"
+                    className="p-2 border rounded"
+                  />
+                  <input
+                    type="number"
+                    value={newLoanTerm}
+                    onChange={(e) => setNewLoanTerm(e.target.value)}
+                    placeholder="Loan Term (years)"
+                    className="p-2 border rounded"
+                  />
+                  <DatePicker
+                    selected={newLoanStartDate}
+                    onChange={(date) => setNewLoanStartDate(date)}
+                    className="p-2 border rounded"
+                    placeholderText="Start Date"
+                  />
+                  <button
+                    onClick={addNewLoan}
+                    className="px-4 py-2 text-white bg-green-500 rounded"
+                  >
+                    Add Loan
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-8 mb-8 md:grid-cols-2">
+                <div>
+                  <h2 className="mb-4 text-2xl font-bold">Loan Overview</h2>
+                  <div style={{ width: "300px", height: "300px" }}>
+                    <Pie
+                      data={pieChartData}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                      }}
+                    />
                   </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="mb-8">
-            <h2 className="mb-4 text-2xl font-bold">Add New Loan</h2>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              <input
-                type="number"
-                value={newLoanAmount}
-                onChange={(e) => setNewLoanAmount(e.target.value)}
-                placeholder="Loan Amount"
-                className="p-2 border rounded"
-              />
-              <select
-                value={newLoanBank}
-                onChange={(e) => setNewLoanBank(e.target.value)}
-                className="p-2 border rounded"
-              >
-                <option value="">Select a bank</option>
-                {banks.map((bank) => (
-                  <option key={bank.id} value={bank.id}>
-                    {bank.name}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="number"
-                value={newLoanInterestRate}
-                onChange={(e) => setNewLoanInterestRate(e.target.value)}
-                placeholder="Interest Rate (%)"
-                className="p-2 border rounded"
-              />
-              <input
-                type="number"
-                value={newLoanTerm}
-                onChange={(e) => setNewLoanTerm(e.target.value)}
-                placeholder="Loan Term (years)"
-                className="p-2 border rounded"
-              />
-              <DatePicker
-                selected={newLoanStartDate}
-                onChange={(date) => setNewLoanStartDate(date)}
-                className="p-2 border rounded"
-                placeholderText="Start Date"
-              />
-              <button
-                onClick={addNewLoan}
-                className="px-4 py-2 text-white bg-green-500 rounded"
-              >
-                Add Loan
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-8 mb-8 md:grid-cols-2">
-            <div>
-              <h2 className="mb-4 text-2xl font-bold">Loan Overview</h2>
-              <div style={{ width: "300px", height: "300px" }}>
-                <Pie
-                  data={pieChartData}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                  }}
-                />
+                </div>
+                <div>
+                  <h2 className="mb-4 text-2xl font-bold">Loan Comparison</h2>
+                  <Bar data={barChartData} />
+                </div>
               </div>
             </div>
-            <div>
-              <h2 className="mb-4 text-2xl font-bold">Loan Comparison</h2>
-              <Bar data={barChartData} />
-            </div>
           </div>
-        </div>
+        </main>
       </div>
     </div>
   );
