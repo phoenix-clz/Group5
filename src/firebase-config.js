@@ -8,12 +8,12 @@ import {
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAuUKsNjUykUiV3CXh-LcEXg7HfpwX_Yp4",
-  authDomain: "smart-paisa-6eba6.firebaseapp.com",
-  projectId: "smart-paisa-6eba6",
-  storageBucket: "smart-paisa-6eba6.appspot.com",
-  messagingSenderId: "209115168676",
-  appId: "1:209115168676:web:3708de73eeef4944720b31",
+  apiKey: "AIzaSyCVZmbJEZ39b11XgtvGTiHXP77zBGk8i0Q",
+  authDomain: "smart-paisa-56aa4.firebaseapp.com",
+  projectId: "smart-paisa-56aa4",
+  storageBucket: "smart-paisa-56aa4.appspot.com",
+  messagingSenderId: "986106966034",
+  appId: "1:986106966034:web:c2fef79579bdd056f628cb"
 };
 
 // Initialize Firebase
