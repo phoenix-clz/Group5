@@ -54,14 +54,14 @@ const NavBar = ({ user, handleLogin, handleLogout }) => {
                   <span className="mr-2 text-white">{user.displayName}</span>
                 </div>
                 {dropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white text-black rounded-lg shadow-lg">
+                  <div className="absolute right-0 w-48 mt-2 text-black bg-white rounded-lg shadow-lg">
                     <div className="p-2">
                       <span className="block px-4 py-2 text-sm font-semibold">
                         {user.displayName}
                       </span>
                       <button
                         onClick={handleLogout}
-                        className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                        className="block w-full px-4 py-2 text-sm text-left text-red-600 hover:bg-gray-100"
                       >
                         <FaSignOutAlt className="inline mr-2" /> Logout
                       </button>

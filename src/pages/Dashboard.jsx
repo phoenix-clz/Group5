@@ -416,143 +416,149 @@ const Dashboard = () => {
   return (
     <div className="flex flex-col h-screen bg-gray-100 md:flex-row">
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex flex-col flex-1 overflow-hidden">
         <DashNavbar onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
-        <div className="p-4 md:p-6">
-          <div className="p-4 mb-4 bg-white rounded-lg shadow-md md:p-6">
-            <div className="flex flex-col items-start justify-between mb-4 md:flex-row md:items-center">
-              <h2 className="mb-2 text-xl font-semibold md:mb-0 md:text-2xl">
-                User Overview
-              </h2>
-              <button
-                onClick={generatePDF}
-                className="px-4 py-2 text-sm text-white bg-blue-500 rounded hover:bg-blue-600"
-              >
-                Generate Report
-              </button>
-            </div>
-            <p className="mb-2 text-2xl font-bold text-green-600 md:text-3xl">
-              Rs. {totalBalance.toLocaleString()}
-            </p>
-            <p className="text-gray-600">Total Balance</p>
-            <p className="mt-2">
-              Financial Health Score:
-              <span
-                className={`${
-                  financialHealthScore === "Poor"
-                    ? "text-red-500"
-                    : parseFloat(financialHealthScore) > 70
-                    ? "text-green-500"
-                    : parseFloat(financialHealthScore) > 40
-                    ? "text-yellow-500"
-                    : "text-red-500"
-                }`}
-              >
-                {" "}
-                {financialHealthScore === "Poor"
-                  ? "Poor"
-                  : `${financialHealthScore}%`}
-              </span>
-            </p>
-          </div>
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-200">
+          <div className="container px-6 py-8 mx-auto">
+            <div className="p-4 md:p-6">
+              <div className="p-4 mb-4 bg-white rounded-lg shadow-md md:p-6">
+                <div className="flex flex-col items-start justify-between mb-4 md:flex-row md:items-center">
+                  <h2 className="mb-2 text-xl font-semibold md:mb-0 md:text-2xl">
+                    User Overview
+                  </h2>
+                  <button
+                    onClick={generatePDF}
+                    className="px-4 py-2 text-sm text-white bg-blue-500 rounded hover:bg-blue-600"
+                  >
+                    Generate Report
+                  </button>
+                </div>
+                <p className="mb-2 text-2xl font-bold text-green-600 md:text-3xl">
+                  Rs. {totalBalance.toLocaleString()}
+                </p>
+                <p className="text-gray-600">Total Balance</p>
+                <p className="mt-2">
+                  Financial Health Score:
+                  <span
+                    className={`${
+                      financialHealthScore === "Poor"
+                        ? "text-red-500"
+                        : parseFloat(financialHealthScore) > 70
+                        ? "text-green-500"
+                        : parseFloat(financialHealthScore) > 40
+                        ? "text-yellow-500"
+                        : "text-red-500"
+                    }`}
+                  >
+                    {" "}
+                    {financialHealthScore === "Poor"
+                      ? "Poor"
+                      : `${financialHealthScore}%`}
+                  </span>
+                </p>
+              </div>
 
-          <div className="p-4 mb-4 bg-white rounded-lg shadow-md md:p-6">
-            <h3 className="mb-4 text-lg font-semibold md:text-xl">
-              Personalized Advice
-            </h3>
-            <p className="text-gray-800">{advice || "Loading advice..."}</p>
-          </div>
+              <div className="p-4 mb-4 bg-white rounded-lg shadow-md md:p-6">
+                <h3 className="mb-4 text-lg font-semibold md:text-xl">
+                  Personalized Advice
+                </h3>
+                <p className="text-gray-800">{advice || "Loading advice..."}</p>
+              </div>
 
-          <div className="p-4 mb-4 bg-white rounded-lg shadow-md md:p-6">
-            <h3 className="mb-4 text-lg font-semibold md:text-xl">
-              Expenditure Habit
-            </h3>
-            <p className="text-gray-800">{expenditureHabit}</p>
-          </div>
+              <div className="p-4 mb-4 bg-white rounded-lg shadow-md md:p-6">
+                <h3 className="mb-4 text-lg font-semibold md:text-xl">
+                  Expenditure Habit
+                </h3>
+                <p className="text-gray-800">{expenditureHabit}</p>
+              </div>
 
-          <div className="p-4 mb-4 bg-white rounded-lg shadow-md md:p-6">
-            <h3 className="mb-4 text-lg font-semibold md:text-xl">
-              Monthly Income & Expenditure
-            </h3>
-            <div className="mb-4">
-              <label
-                htmlFor="month-filter"
-                className="block mb-2 md:inline md:mr-2"
-              >
-                Select Month:
-              </label>
-              <input
-                type="month"
-                id="month-filter"
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                className="w-full px-2 py-1 border rounded md:w-auto"
-              />
-            </div>
-            {monthlyData && <Line data={monthlyData} height={80} />}
-          </div>
+              <div className="p-4 mb-4 bg-white rounded-lg shadow-md md:p-6">
+                <h3 className="mb-4 text-lg font-semibold md:text-xl">
+                  Monthly Income & Expenditure
+                </h3>
+                <div className="mb-4">
+                  <label
+                    htmlFor="month-filter"
+                    className="block mb-2 md:inline md:mr-2"
+                  >
+                    Select Month:
+                  </label>
+                  <input
+                    type="month"
+                    id="month-filter"
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(e.target.value)}
+                    className="w-full px-2 py-1 border rounded md:w-auto"
+                  />
+                </div>
+                {monthlyData && <Line data={monthlyData} height={80} />}
+              </div>
 
-          <div className="p-4 bg-white rounded-lg shadow-md md:p-6">
-            <h3 className="mb-4 text-lg font-semibold md:text-xl">
-              Recent Transactions
-            </h3>
-            <div className="mb-4">
-              <label
-                htmlFor="platform-filter"
-                className="block mb-2 md:inline md:mr-2"
-              >
-                Filter by Platform:
-              </label>
-              <select
-                id="platform-filter"
-                value={selectedPlatform}
-                onChange={(e) => setSelectedPlatform(e.target.value)}
-                className="w-full px-2 py-1 border rounded md:w-auto"
-              >
-                <option value="all">All</option>
-                <option value="bank">Bank</option>
-                <option value="card">Card</option>
-                <option value="wallet">Wallet</option>
-              </select>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-gray-200">
-                    <th className="p-2 text-left">Amount</th>
-                    <th className="p-2 text-left">Type</th>
-                    <th className="p-2 text-left">Platform</th>
-                    <th className="p-2 text-left">Date</th>
-                    <th className="p-2 text-left">Details</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredTransactions.map((transaction) => (
-                    <tr key={transaction.id} className="border-b">
-                      <td className="p-2">
-                        <span
-                          className={
-                            transaction.type === "income"
-                              ? "text-green-500"
-                              : "text-red-500"
-                          }
-                        >
-                          Rs. {transaction.amount}
-                        </span>
-                      </td>
-                      <td className="p-2 capitalize">{transaction.type}</td>
-                      <td className="p-2 capitalize">{transaction.platform}</td>
-                      <td className="p-2">
-                        {new Date(transaction.date).toLocaleDateString()}
-                      </td>
-                      <td className="p-2">{transaction.remarks}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="p-4 bg-white rounded-lg shadow-md md:p-6">
+                <h3 className="mb-4 text-lg font-semibold md:text-xl">
+                  Recent Transactions
+                </h3>
+                <div className="mb-4">
+                  <label
+                    htmlFor="platform-filter"
+                    className="block mb-2 md:inline md:mr-2"
+                  >
+                    Filter by Platform:
+                  </label>
+                  <select
+                    id="platform-filter"
+                    value={selectedPlatform}
+                    onChange={(e) => setSelectedPlatform(e.target.value)}
+                    className="w-full px-2 py-1 border rounded md:w-auto"
+                  >
+                    <option value="all">All</option>
+                    <option value="bank">Bank</option>
+                    <option value="card">Card</option>
+                    <option value="wallet">Wallet</option>
+                  </select>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-gray-200">
+                        <th className="p-2 text-left">Amount</th>
+                        <th className="p-2 text-left">Type</th>
+                        <th className="p-2 text-left">Platform</th>
+                        <th className="p-2 text-left">Date</th>
+                        <th className="p-2 text-left">Details</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredTransactions.map((transaction) => (
+                        <tr key={transaction.id} className="border-b">
+                          <td className="p-2">
+                            <span
+                              className={
+                                transaction.type === "income"
+                                  ? "text-green-500"
+                                  : "text-red-500"
+                              }
+                            >
+                              Rs. {transaction.amount}
+                            </span>
+                          </td>
+                          <td className="p-2 capitalize">{transaction.type}</td>
+                          <td className="p-2 capitalize">
+                            {transaction.platform}
+                          </td>
+                          <td className="p-2">
+                            {new Date(transaction.date).toLocaleDateString()}
+                          </td>
+                          <td className="p-2">{transaction.remarks}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        </main>
       </div>
     </div>
   );
