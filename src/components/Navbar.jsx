@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react"; // Import useRef and useEffect
-import { FaSignOutAlt, FaTachometerAlt } from "react-icons/fa"; 
-import { Link } from "react-router-dom"; 
-import PropTypes from 'prop-types';
+import { FaSignOutAlt, FaTachometerAlt } from "react-icons/fa";
+import { Link } from "react-router-dom";
+import PropTypes from "prop-types";
 
 const NavBar = ({ user, handleLogin, handleLogout }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false); // State to control dropdown
@@ -21,7 +21,7 @@ const NavBar = ({ user, handleLogin, handleLogout }) => {
 
     // Bind the event listener
     document.addEventListener("mousedown", handleClickOutside);
-    
+
     // Cleanup function to remove event listener
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -42,8 +42,13 @@ const NavBar = ({ user, handleLogin, handleLogout }) => {
                 <FaTachometerAlt className="mr-2" />
                 Dashboard
               </Link>
-              <div className="relative" ref={dropdownRef}> {/* Attach ref here */}
-                <div className="flex items-center cursor-pointer" onClick={toggleDropdown}>
+              <div className="relative" ref={dropdownRef}>
+                {" "}
+                {/* Attach ref here */}
+                <div
+                  className="flex items-center cursor-pointer"
+                  onClick={toggleDropdown}
+                >
                   {user.photoURL && (
                     <img
                       src={user.photoURL}
@@ -76,7 +81,7 @@ const NavBar = ({ user, handleLogin, handleLogout }) => {
               className="flex items-center px-4 py-2 text-white bg-blue-500 rounded"
             >
               <img
-                src="https://static-00.iconduck.com/assets.00/google-icon-2048x2048-pks9lbdv.png"
+                src="https://cdn1.iconfinder.com/data/icons/google-s-logo/150/Google_Icons-09-1024.png"
                 alt="Google Icon"
                 className="w-5 h-5 mr-2"
               />

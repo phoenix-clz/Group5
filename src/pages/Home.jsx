@@ -52,10 +52,9 @@ const Home = () => {
         handleLogout={handleLogout}
       />
       <Hero handleLogin={handleLogin} />
-      <CoursesSection/>
-      <InvestmentSection/>
+      <InvestmentSection />
       <FeaturesSection />
-      <ArticlesSection/>
+      <ArticlesSection />
       <Footer />
     </div>
   );
