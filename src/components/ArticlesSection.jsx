@@ -60,7 +60,7 @@ const ArticlesSection = () => {
         {/* Share Market Articles */}
         <div className="grid gap-8 md:grid-cols-3 mb-12">
           {shareMarketArticles.map((article, index) => (
-            <FadeIn key={index} direction="right" delay={index * 0.5}>
+            <FadeIn key={index} direction="right" delay={index * 0.1}>
               <div className="p-6 text-center bg-white rounded-lg shadow-lg transition-transform transform hover:scale-105">
                 <img
                   src={article.image}
@@ -94,7 +94,7 @@ const ArticlesSection = () => {
 
         <div className="grid gap-8 md:grid-cols-3">
           {gharJaggaArticles.map((article, index) => (
-            <FadeIn key={index} direction="right" delay={index * 0.5}>
+            <FadeIn key={index} direction="right" delay={index * 0.1}>
               <div className="p-6 text-center bg-white rounded-lg shadow-lg transition-transform transform hover:scale-105">
                 <img
                   src={article.image}

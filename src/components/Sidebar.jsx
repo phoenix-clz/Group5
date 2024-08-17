@@ -234,9 +234,11 @@ const Sidebar = ({ isOpen, onClose }) => {
       >
         <div className="p-4">
           <div className="flex items-center justify-between">
+            <Link to="/">
             <h2 className="text-2xl font-semibold text-gray-800">
               Smart Paisa
             </h2>
+            </Link>
             <button onClick={onClose} className="md:hidden">
               <svg
                 className="w-6 h-6"
