@@ -11,6 +11,7 @@ import {
   where,
 } from "firebase/firestore";
 import { db, auth } from "../firebase-config";
+import { FaPiggyBank } from "react-icons/fa";
 
 const Sidebar = ({ isOpen, onClose }) => {
   const [showPopup, setShowPopup] = useState(false);
@@ -234,11 +235,10 @@ const Sidebar = ({ isOpen, onClose }) => {
       >
         <div className="p-4">
           <div className="flex items-center justify-between">
-            <Link to="/">
-            <h2 className="text-2xl font-semibold text-gray-800">
-              Smart Paisa
-            </h2>
-            </Link>
+            <div className="flex items-center text-2xl font-bold">
+              <FaPiggyBank className="mr-2" /> {/* Add the icon here */}
+              <Link to="/">Smart Paisa</Link>
+            </div>
             <button onClick={onClose} className="md:hidden">
               <svg
                 className="w-6 h-6"
