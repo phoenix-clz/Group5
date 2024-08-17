@@ -8,13 +8,14 @@ import {
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyC3iTmyao5kY021eTRPhX-qeJcl6rNZ-Zk",
-  authDomain: "smartmoney-a17cd.firebaseapp.com",
-  projectId: "smartmoney-a17cd",
-  storageBucket: "smartmoney-a17cd.appspot.com",
-  messagingSenderId: "551295988975",
-  appId: "1:551295988975:web:39d16215f30cfcc233d71a",
+  apiKey: "AIzaSyCVZmbJEZ39b11XgtvGTiHXP77zBGk8i0Q",
+  authDomain: "smart-paisa-56aa4.firebaseapp.com",
+  projectId: "smart-paisa-56aa4",
+  storageBucket: "smart-paisa-56aa4.appspot.com",
+  messagingSenderId: "986106966034",
+  appId: "1:986106966034:web:c2fef79579bdd056f628cb"
 };
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);

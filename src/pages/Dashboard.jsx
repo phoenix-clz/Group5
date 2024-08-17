@@ -378,25 +378,92 @@ const Dashboard = () => {
 
   const getFinancialAdvice = async () => {
     try {
-      const userFinancialData = {
-        totalBalance,
-        financialHealthScore,
-        userData,
-      };
+      let usersAdvice = "\n\n";
 
-      const response = await fetch(
-        "http://localhost:3001/api/get-financial-advice",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(userFinancialData),
+      // Advice based on financial health score
+      if (financialHealthScore === "Poor") {
+        usersAdvice +=
+          "Your financial health score is poor. This is a critical situation that requires immediate attention.\n";
+        usersAdvice += "- Create a strict budget to control your expenses.\n";
+        usersAdvice += "- Look for ways to increase your income.\n";
+        usersAdvice += "- Prioritize paying off high-interest debts.\n";
+      } else {
+        const score = parseFloat(financialHealthScore);
+        if (score < 40) {
+          usersAdvice +=
+            "Your financial health score is low. Take steps to improve your financial situation.\n";
+        } else if (score < 70) {
+          usersAdvice +=
+            "Your financial health score is moderate. There's room for improvement in your financial health.\n";
+        } else {
+          usersAdvice +=
+            "Your financial health score is good. Keep up the great work and focus on long-term financial goals.\n";
         }
-      );
+      }
 
-      const data = await response.json();
-      setAdvice(data.advice);
+      // Advice based on total balance
+      if (totalBalance < 1000) {
+        usersAdvice +=
+          "Your total balance is very low. Focus on building an emergency fund.\n";
+      } else if (totalBalance < 5000) {
+        usersAdvice +=
+          "Your total balance is moderate. Try to increase your savings.\n";
+      } else {
+        usersAdvice +=
+          "You have a good balance. Consider investing some of this money for potentially higher returns.\n";
+      }
+
+      // Advice based on loans
+      const totalLoanAmount = userData.loans.reduce(
+        (sum, loan) => sum + loan.amount,
+        0
+      );
+      if (totalLoanAmount > 0) {
+        usersAdvice += `You have a total loan amount of ${totalLoanAmount}. `;
+        const highInterestLoans = userData.loans.filter(
+          (loan) => loan.interestRate > 10
+        );
+        if (highInterestLoans.length > 0) {
+          usersAdvice +=
+            "Prioritize paying off high-interest loans to reduce your overall debt burden.\n";
+        } else {
+          usersAdvice +=
+            "Continue making regular payments on your loans to maintain a good credit score.\n";
+        }
+      }
+
+      // Advice based on credit cards
+      if (userData.cards.length > 0) {
+        usersAdvice +=
+          "You have credit cards. Use them responsibly and try to pay off the full balance each month to avoid interest charges.\n";
+      }
+
+      // Advice based on insurance
+      if (userData.insurances.length > 0) {
+        usersAdvice +=
+          "You have insurance policies, which is good for financial protection. Regularly review your coverage to ensure it meets your current needs.\n";
+      } else {
+        usersAdvice +=
+          "Consider getting insurance to protect yourself financially against unexpected events.\n";
+      }
+
+      // Advice based on wallets
+      if (userData.wallets.length > 0) {
+        const totalWalletBalance = userData.wallets.reduce(
+          (sum, wallet) => sum + wallet.balance,
+          0
+        );
+        usersAdvice += `You have digital wallets with a total balance of ${totalWalletBalance}. `;
+        if (totalWalletBalance > 1000) {
+          usersAdvice +=
+            "Consider transferring some of this balance to a savings account for better interest rates.\n";
+        } else {
+          usersAdvice +=
+            "Keep a reasonable amount in your digital wallets for convenience, but don't forget to save regularly.\n";
+        }
+      }
+
+      setAdvice(usersAdvice);
     } catch (error) {
       console.error("Error fetching financial advice:", error);
     }
