@@ -31,10 +31,13 @@ ChartJS.register(
 const Dashboard = () => {
   const navigate = useNavigate();
   const user = JSON.parse(sessionStorage.getItem("user"));
+  console.log("user: ", user);
 
-  if (!user) {
-    navigate("/login");
-  }
+  useEffect(() => {
+    if (!user) {
+      navigate("/login");
+    }
+  }, [user, navigate]);
 
   const [selectedPlatform, setSelectedPlatform] = useState("all");
   const [advice, setAdvice] = useState("");
