@@ -49,7 +49,7 @@ const FeaturesSection = () => {
 
         <div className="grid gap-8 md:grid-cols-3">
           {features.map((item, index) => (
-            <FadeIn key={index} direction="right" delay={index * 0.5}>
+            <FadeIn key={index} direction="right" delay={index * 0.1}>
               <div className="flex flex-col p-6 text-center bg-white rounded-lg shadow-md h-full">
                 <img
                   src={item.image}

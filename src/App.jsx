@@ -9,6 +9,10 @@ import LoanPage from "./pages/LoanPage";
 import InsurancePage from "./pages/InsurancePage";
 import TransactionsPage from "./pages/TransactionPage";
 import RetirementPlanningSimulator from "./pages/RetirementPlanner";
+import Calculator from "./pages/Calculator";
+import EMICalculator from "./components/EmiCalculator";
+import SIPCalculator from "./components/SipCalculator";
+import ShareCalculator from "./components/ShareCalculator";
 
 function App() {
   return (
@@ -16,6 +20,10 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/calculator" element={<Calculator />} />
+        <Route path="/calculator/emi" element={<EMICalculator />} />
+        <Route path="/calculator/sip" element={<SIPCalculator />} />
+        <Route path="/calculator/share" element={<ShareCalculator />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/bank" element={<BankPage />} />
         <Route path="/card" element={<CardsPage />} />
