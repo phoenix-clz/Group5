@@ -54,7 +54,7 @@ const RetirementPlanner = () => {
   const [desiredMonthlyIncome, setDesiredMonthlyIncome] = useState(50000);
   const [projectionData, setProjectionData] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  
+
   useEffect(() => {
     fetchRetirementPlan();
   }, [user]);
@@ -380,12 +380,6 @@ const RetirementPlanner = () => {
                   </div>
                 </div>
                 <div className="mt-4">
-                  <button
-                    onClick={saveRetirementPlan}
-                    className="px-4 py-2 mr-2 text-white bg-green-500 rounded hover:bg-green-600"
-                  >
-                    Save Plan
-                  </button>
                   <button
                     onClick={calculateProjection}
                     className="px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600"
