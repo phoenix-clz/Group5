@@ -5,9 +5,12 @@ import FeaturesSection from "../components/FeatureSection";
 import Footer from "../components/Footer";
 import NavBar from "../components/Navbar";
 import InvestmentSection from "../components/InvestmentSection";
+import { useNavigate } from "react-router-dom";
 
 const Home = () => {
   const [user, setUser] = useState(null);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const storedUser = sessionStorage.getItem("user");
@@ -18,16 +21,15 @@ const Home = () => {
 
   const handleLogin = async () => {
     try {
-      const currentUser = await signInWithGoogle();
+      //get logged user from session
+      const currentUser = JSON.parse(sessionStorage.getItem("user"));
       if (currentUser) {
-        const userData = {
-          uid: currentUser.uid,
-          email: currentUser.email,
-          displayName: currentUser.displayName,
-          photoURL: currentUser.photoURL,
-        };
-        sessionStorage.setItem("user", JSON.stringify(userData));
-        setUser(userData);
+        //redirect to dashboard
+        setUser(currentUser);
+        navigate("/dashboard");
+      } else {
+        //redirect to login page
+        navigate("/login");
       }
     } catch (error) {
       console.error("Error during login:", error);

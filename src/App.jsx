@@ -5,6 +5,9 @@ import Dashboard from "./pages/Dashboard";
 import BankPage from "./pages/BankPage";
 import CardsPage from "./pages/CardsPage";
 import WalletPage from "./pages/WalletPage";
+import LoanPage from "./pages/LoanPage";
+import InsurancePage from "./pages/InsurancePage";
+import TransactionsPage from "./pages/TransactionPage";
 
 function App() {
   return (
@@ -16,6 +19,9 @@ function App() {
         <Route path="/bank" element={<BankPage />} />
         <Route path="/card" element={<CardsPage />} />
         <Route path="/wallet" element={<WalletPage />} />
+        <Route path="/loan" element={<LoanPage />} />
+        <Route path="/insurance" element={<InsurancePage />} />
+        <Route path="/transaction" element={<TransactionsPage />} />
       </Routes>
     </Router>
   );

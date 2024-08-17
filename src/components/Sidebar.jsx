@@ -1,5 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import {
+  collection,
+  addDoc,
+  getDocs,
+  doc,
+  updateDoc,
+  increment,
+  query,
+  where,
+} from "firebase/firestore";
+import { db, auth } from "../firebase-config";
 
 const Sidebar = () => {
   const [showPopup, setShowPopup] = useState(false);
@@ -10,6 +21,15 @@ const Sidebar = () => {
     type: "",
     remarks: "",
   });
+  const [userPlatforms, setUserPlatforms] = useState({
+    banks: [],
+    cards: [],
+    wallets: [],
+    loans: [],
+    insurances: [],
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
 
   const sidebarItems = [
     { name: "Dashboard", path: "/dashboard" },
@@ -18,7 +38,63 @@ const Sidebar = () => {
     { name: "Wallet", path: "/wallet" },
     { name: "Loan", path: "/loan" },
     { name: "Insurance", path: "/insurance" },
+    { name: "My Transactions", path: "/transaction" },
   ];
+
+  useEffect(() => {
+    fetchUserPlatforms();
+  }, []);
+
+  const fetchUserPlatforms = async () => {
+    //get user from the session storage
+    const storedUser = sessionStorage.getItem("user");
+
+    const userId = JSON.parse(storedUser)?.uid;
+    const platforms = {};
+
+    for (const platformType of [
+      "banks",
+      "cards",
+      "wallets",
+      "loans",
+      "insurances",
+    ]) {
+      const q = query(
+        collection(db, platformType),
+        where("userId", "==", userId)
+      );
+      const querySnapshot = await getDocs(q);
+      platforms[platformType] = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+    }
+
+    setUserPlatforms(platforms);
+  };
+
+  const getSubPlatformName = (platform, subPlatformId) => {
+    const platformData = userPlatforms[platform];
+    const selectedPlatform = platformData.find(
+      (item) => item.id === subPlatformId
+    );
+
+    switch (platform) {
+      case "banks":
+      case "wallets":
+        return selectedPlatform?.name;
+      case "cards":
+        return `${
+          selectedPlatform?.bankName
+        } - **** ${selectedPlatform?.number.slice(-4)}`;
+      case "loans":
+        return `Loan of $${selectedPlatform?.amount} at ${selectedPlatform?.interestRate}%`;
+      case "insurances":
+        return `${selectedPlatform?.typeId} Insurance`;
+      default:
+        return "";
+    }
+  };
 
   const handleNewTransaction = () => {
     setShowPopup(true);
@@ -33,6 +109,7 @@ const Sidebar = () => {
       type: "",
       remarks: "",
     });
+    setError(null);
   };
 
   const handleInputChange = (e) => {
@@ -40,11 +117,102 @@ const Sidebar = () => {
     setTransactionDetails((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Here you would typically send the transaction details to your backend
-    console.log("Transaction submitted:", transactionDetails);
-    handleClosePopup();
+    setIsSubmitting(true);
+    setError(null);
+    const userId = auth.currentUser.uid;
+
+    try {
+      let subPlatformName = transactionDetails.subPlatform;
+      if (transactionDetails.platform !== "cash") {
+        subPlatformName = getSubPlatformName(
+          transactionDetails.platform,
+          transactionDetails.subPlatform
+        );
+      }
+
+      const newTransaction = {
+        ...transactionDetails,
+        subPlatform: subPlatformName,
+        userId,
+        amount: parseFloat(transactionDetails.amount),
+        date: new Date().toISOString(),
+      };
+
+      // Add the transaction to Firestore
+      await addDoc(collection(db, "transactions"), newTransaction);
+
+      // Update the balance of the selected platform
+      if (transactionDetails.platform !== "cash") {
+        const platformRef = doc(
+          db,
+          transactionDetails.platform,
+          transactionDetails.subPlatform
+        );
+        await updateDoc(platformRef, {
+          balance: increment(
+            transactionDetails.type === "income"
+              ? parseFloat(transactionDetails.amount)
+              : -parseFloat(transactionDetails.amount)
+          ),
+        });
+      }
+
+      console.log("Transaction saved successfully");
+      handleClosePopup();
+      fetchUserPlatforms(); // Refresh the user platforms data
+    } catch (error) {
+      console.error("Error saving transaction: ", error);
+      setError("Failed to save transaction. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const renderSubPlatformOptions = () => {
+    if (
+      !transactionDetails.platform ||
+      transactionDetails.platform === "cash"
+    ) {
+      return null;
+    }
+
+    switch (transactionDetails.platform) {
+      case "banks":
+        return userPlatforms.banks.map((bank) => (
+          <option key={bank.id} value={bank.id}>
+            {bank.name} - Balance: ${bank.balance}
+          </option>
+        ));
+      case "cards":
+        return userPlatforms.cards.map((card) => (
+          <option key={card.id} value={card.id}>
+            {card.bankName} - **** {card.number.slice(-4)}
+          </option>
+        ));
+      case "wallets":
+        return userPlatforms.wallets.map((wallet) => (
+          <option key={wallet.id} value={wallet.id}>
+            {wallet.name} - Balance: ${wallet.balance}
+          </option>
+        ));
+      case "loans":
+        return userPlatforms.loans.map((loan) => (
+          <option key={loan.id} value={loan.id}>
+            Loan of ${loan.amount} at {loan.interestRate}% - Next payment: $
+            {loan.monthlyPayment.toFixed(2)}
+          </option>
+        ));
+      case "insurances":
+        return userPlatforms.insurances.map((insurance) => (
+          <option key={insurance.id} value={insurance.id}>
+            {insurance.typeId} Insurance - Premium: ${insurance.premium}
+          </option>
+        ));
+      default:
+        return null;
+    }
   };
 
   return (
@@ -78,6 +246,7 @@ const Sidebar = () => {
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="p-6 bg-white rounded-lg w-96">
             <h3 className="mb-4 text-xl font-semibold">New Transaction</h3>
+            {error && <p className="mb-4 text-red-500">{error}</p>}
             <form onSubmit={handleSubmit}>
               <select
                 name="platform"
@@ -87,25 +256,28 @@ const Sidebar = () => {
                 required
               >
                 <option value="">Select Platform</option>
-                <option value="bank">Bank</option>
-                <option value="card">Card</option>
-                <option value="wallet">Wallet</option>
-                <option value="loan">Loan</option>
-                <option value="insurance">Insurance</option>
+                <option value="banks">Bank</option>
+                <option value="cards">Card</option>
+                <option value="wallets">Wallet</option>
+                <option value="loans">Loan</option>
+                <option value="insurances">Insurance</option>
                 <option value="cash">Cash</option>
               </select>
 
               {transactionDetails.platform &&
                 transactionDetails.platform !== "cash" && (
-                  <input
-                    type="text"
+                  <select
                     name="subPlatform"
                     value={transactionDetails.subPlatform}
                     onChange={handleInputChange}
-                    placeholder={`Which ${transactionDetails.platform}?`}
                     className="w-full p-2 mb-2 border rounded"
                     required
-                  />
+                  >
+                    <option value="">
+                      Select {transactionDetails.platform}
+                    </option>
+                    {renderSubPlatformOptions()}
+                  </select>
                 )}
 
               <input
@@ -126,8 +298,8 @@ const Sidebar = () => {
                 required
               >
                 <option value="">Select Type</option>
-                <option value="credit">Credit</option>
-                <option value="debit">Debit</option>
+                <option value="income">Income</option>
+                <option value="expense">Expense</option>
               </select>
 
               <textarea
@@ -144,14 +316,16 @@ const Sidebar = () => {
                   type="button"
                   onClick={handleClosePopup}
                   className="px-4 py-2 mr-2 bg-gray-200 rounded"
+                  disabled={isSubmitting}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   className="px-4 py-2 text-white bg-blue-500 rounded"
+                  disabled={isSubmitting}
                 >
-                  Submit
+                  {isSubmitting ? "Submitting..." : "Submit"}
                 </button>
               </div>
             </form>

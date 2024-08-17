@@ -46,24 +46,11 @@ const CardsPage = () => {
   const [cards, setCards] = useState([]);
   const [banks, setBanks] = useState([]);
   const [transactions, setTransactions] = useState([]);
-  const [selectedBank, setSelectedBank] = useState("all");
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
-  const [transactionType, setTransactionType] = useState("all");
   const [newCardDetails, setNewCardDetails] = useState({
     bank: "",
     number: "",
     expiryDate: "",
-    cardholderName: "",
   });
-
-  useEffect(() => {
-    if (user && user.uid) {
-      fetchCards();
-      fetchBanks();
-      fetchTransactions();
-    }
-  }, [user]);
 
   useEffect(() => {
     const storedUser = sessionStorage.getItem("user");
@@ -76,6 +63,14 @@ const CardsPage = () => {
       }
     }
   }, []);
+
+  useEffect(() => {
+    if (user && user.uid) {
+      fetchCards();
+      fetchBanks();
+      fetchTransactions();
+    }
+  }, [user]);
 
   const fetchCards = async () => {
     if (!user || !user.uid) return;
@@ -90,25 +85,90 @@ const CardsPage = () => {
   };
 
   const fetchBanks = async () => {
-    // Replace with your API call
-    const mockedBanks = [
-      { id: 1, name: "Bank A" },
-      { id: 2, name: "Bank B" },
-      { id: 3, name: "Bank C" },
-    ];
-    setBanks(mockedBanks);
+    if (!user || !user.uid) return;
+    const banksCollection = collection(db, "banks");
+    const q = query(banksCollection, where("userId", "==", user.uid));
+    const banksSnapshot = await getDocs(q);
+    const banksList = banksSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    setBanks(banksList);
   };
 
   const fetchTransactions = async () => {
     if (!user || !user.uid) return;
     const transactionsCollection = collection(db, "transactions");
-    const q = query(transactionsCollection, where("userId", "==", user.uid));
+    const q = query(
+      transactionsCollection,
+      where("userId", "==", user.uid),
+      where("platform", "==", "cards")
+    );
     const transactionsSnapshot = await getDocs(q);
     const transactionsList = transactionsSnapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     }));
     setTransactions(transactionsList);
+  };
+
+  const pieChartData = {
+    labels: cards
+      .filter((card) => card.linked)
+      .map((card) => `${card.bankName} (*${card.number.slice(-4)})`),
+    datasets: [
+      {
+        data: cards
+          .filter((card) => card.linked)
+          .map((card) => {
+            return transactions
+              .filter((t) => t.subPlatform.includes(card.number.slice(-4)))
+              .reduce((sum, t) => sum + t.amount, 0);
+          }),
+        backgroundColor: [
+          "#FF6384",
+          "#36A2EB",
+          "#FFCE56",
+          "#4BC0C0",
+          "#9966FF",
+          "#FF9F40",
+          "#4BC0C0",
+          "#9966FF",
+          "#FF6384",
+          "#36A2EB",
+        ],
+      },
+    ],
+  };
+
+  const barChartData = {
+    labels: cards
+      .filter((card) => card.linked)
+      .map((card) => `${card.bankName} (*${card.number.slice(-4)})`),
+    datasets: [
+      {
+        label: "Total Spent",
+        data: cards
+          .filter((card) => card.linked)
+          .map((card) => {
+            return transactions
+              .filter((t) => t.subPlatform.includes(card.number.slice(-4)))
+              .reduce((sum, t) => sum + t.amount, 0);
+          }),
+        backgroundColor: [
+          "#FF6384",
+          "#36A2EB",
+          "#FFCE56",
+          "#4BC0C0",
+          "#9966FF",
+          "#FF9F40",
+          "#4BC0C0",
+          "#9966FF",
+          "#FF6384",
+          "#36A2EB",
+        ],
+      },
+    ],
   };
 
   const toggleCardLink = async (cardId) => {
@@ -123,12 +183,16 @@ const CardsPage = () => {
       newCardDetails.bank &&
       newCardDetails.number &&
       newCardDetails.expiryDate &&
-      newCardDetails.cardholderName &&
       user &&
       user.uid
     ) {
+      const selectedBank = banks.find(
+        (bank) => bank.id === newCardDetails.bank
+      );
       const newCard = {
         ...newCardDetails,
+        bankName: selectedBank.name,
+        cardholderName: user.displayName || "User", // Fallback to "User" if displayName is not set
         linked: true,
         userId: user.uid,
       };
@@ -138,7 +202,6 @@ const CardsPage = () => {
         bank: "",
         number: "",
         expiryDate: "",
-        cardholderName: "",
       });
     }
   };
@@ -146,48 +209,6 @@ const CardsPage = () => {
   const removeCard = async (cardId) => {
     await deleteDoc(doc(db, "cards", cardId));
     fetchCards();
-  };
-
-  const filteredTransactions = transactions.filter((t) => {
-    const cardMatch =
-      selectedBank === "all" ||
-      cards.find((card) => card.id === t.cardId)?.bank === selectedBank;
-    const typeMatch = transactionType === "all" || t.type === transactionType;
-    const dateMatch =
-      (!startDate || new Date(t.date) >= startDate) &&
-      (!endDate || new Date(t.date) <= endDate);
-    return cardMatch && typeMatch && dateMatch;
-  });
-
-  const pieChartData = {
-    labels: cards.filter((card) => card.linked).map((card) => card.bank),
-    datasets: [
-      {
-        data: cards
-          .filter((card) => card.linked)
-          .map(() => Math.floor(Math.random() * 1000)), // Replace with actual usage data
-        backgroundColor: [
-          "#FF6384",
-          "#36A2EB",
-          "#FFCE56",
-          "#4BC0C0",
-          "#9966FF",
-        ],
-      },
-    ],
-  };
-
-  const barChartData = {
-    labels: cards.filter((card) => card.linked).map((card) => card.bank),
-    datasets: [
-      {
-        label: "Total Spent",
-        data: cards
-          .filter((card) => card.linked)
-          .map(() => Math.floor(Math.random() * 5000)), // Replace with actual spending data
-        backgroundColor: "#36A2EB",
-      },
-    ],
   };
 
   const getExpiringCards = () => {
@@ -225,8 +246,8 @@ const CardsPage = () => {
               <ul className="mt-2 list-disc list-inside">
                 {getExpiringCards().map((card) => (
                   <li key={card.id} className="text-yellow-800">
-                    {card.bank} card ending in {card.number.slice(-4)} expires
-                    on {card.expiryDate}
+                    {card.bankName} card ending in {card.number.slice(-4)}{" "}
+                    expires on {card.expiryDate}
                   </li>
                 ))}
               </ul>
@@ -240,10 +261,10 @@ const CardsPage = () => {
               {cards.map((card) => (
                 <div key={card.id} className="p-4 bg-white rounded-lg shadow">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-xl font-semibold">{card.bank}</h3>
+                    <h3 className="text-xl font-semibold">{card.bankName}</h3>
                     <button
                       onClick={() => toggleCardLink(card.id)}
-                      className={`p-1 rounded ${
+                      className={`p-1 rounded Rs. {
                         card.linked
                           ? "bg-red-500 text-white"
                           : "bg-green-500 text-white"
@@ -278,16 +299,21 @@ const CardsPage = () => {
           {/* Add New Card */}
           <div className="mb-8">
             <h2 className="mb-4 text-2xl font-bold">Add New Card</h2>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <input
-                type="text"
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <select
                 value={newCardDetails.bank}
                 onChange={(e) =>
                   setNewCardDetails({ ...newCardDetails, bank: e.target.value })
                 }
-                placeholder="Bank Name"
                 className="p-2 border rounded"
-              />
+              >
+                <option value="">Select Bank</option>
+                {banks.map((bank) => (
+                  <option key={bank.id} value={bank.id}>
+                    {bank.name}
+                  </option>
+                ))}
+              </select>
               <input
                 type="text"
                 value={newCardDetails.number}
@@ -310,18 +336,6 @@ const CardsPage = () => {
                   })
                 }
                 placeholder="Expiry Date (MM/YY)"
-                className="p-2 border rounded"
-              />
-              <input
-                type="text"
-                value={newCardDetails.cardholderName}
-                onChange={(e) =>
-                  setNewCardDetails({
-                    ...newCardDetails,
-                    cardholderName: e.target.value,
-                  })
-                }
-                placeholder="Cardholder Name"
                 className="p-2 border rounded"
               />
             </div>
@@ -352,128 +366,6 @@ const CardsPage = () => {
             <div>
               <h2 className="mb-4 text-2xl font-bold">Total Spent by Card</h2>
               <Bar data={barChartData} />
-            </div>
-          </div>
-
-          {/* Transactions */}
-          <div>
-            <h2 className="mb-4 text-2xl font-bold">Transactions</h2>
-            <div className="grid grid-cols-1 gap-4 mb-4 md:grid-cols-4">
-              <div>
-                <label htmlFor="bankFilter" className="block mb-1">
-                  Bank:
-                </label>
-                <select
-                  id="bankFilter"
-                  value={selectedBank}
-                  onChange={(e) => setSelectedBank(e.target.value)}
-                  className="w-full p-2 border rounded"
-                >
-                  <option value="all">All Banks</option>
-                  {banks.map((bank) => (
-                    <option key={bank.id} value={bank.name}>
-                      {bank.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label htmlFor="typeFilter" className="block mb-1">
-                  Type:
-                </label>
-                <select
-                  id="typeFilter"
-                  value={transactionType}
-                  onChange={(e) => setTransactionType(e.target.value)}
-                  className="w-full p-2 border rounded"
-                >
-                  <option value="all">All Types</option>
-                  <option value="purchase">Purchase</option>
-                  <option value="payment">Payment</option>
-                </select>
-              </div>
-              <div>
-                <label className="block mb-1">Start Date:</label>
-                <DatePicker
-                  selected={startDate}
-                  onChange={(date) => setStartDate(date)}
-                  selectsStart
-                  startDate={startDate}
-                  endDate={endDate}
-                  className="w-full p-2 border rounded"
-                />
-              </div>
-              <div>
-                <label className="block mb-1">End Date:</label>
-                <DatePicker
-                  selected={endDate}
-                  onChange={(date) => setEndDate(date)}
-                  selectsEnd
-                  startDate={startDate}
-                  endDate={endDate}
-                  minDate={startDate}
-                  className="w-full p-2 border rounded"
-                />
-              </div>
-            </div>
-            <div className="overflow-hidden bg-white rounded-lg shadow">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                      Date
-                    </th>
-                    <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                      Card
-                    </th>
-                    <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                      Description
-                    </th>
-                    <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                      Type
-                    </th>
-                    <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                      Amount
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredTransactions.map((transaction) => (
-                    <tr key={transaction.id}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {transaction.date}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {cards.find((c) => c.id === transaction.cardId)?.bank}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {transaction.description}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            transaction.type === "purchase"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-green-100 text-green-800"
-                          }`}
-                        >
-                          {transaction.type}
-                        </span>
-                      </td>
-                      <td
-                        className={`px-6 py-4 whitespace-nowrap font-medium ${
-                          transaction.type === "purchase"
-                            ? "text-red-600"
-                            : "text-green-600"
-                        }`}
-                      >
-                        {transaction.type === "purchase" ? "-" : "+"}$
-                        {Math.abs(transaction.amount).toFixed(2)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
           </div>
         </div>
