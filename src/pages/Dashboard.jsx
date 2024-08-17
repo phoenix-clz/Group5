@@ -40,6 +40,10 @@ const Dashboard = () => {
   const [advice, setAdvice] = useState("");
   const [userData, setUserData] = useState(null);
   const [transactions, setTransactions] = useState([]);
+  const [monthlyData, setMonthlyData] = useState(null);
+  const [selectedMonth, setSelectedMonth] = useState(
+    new Date().toISOString().slice(0, 7)
+  );
 
   const generatePDF = () => {
     const doc = new jsPDF();
@@ -164,35 +168,17 @@ const Dashboard = () => {
 
         setUserData(userDataObj);
 
-        // Create transactions from the fetched data
-        const allTransactions = [
-          ...userDataObj.banks.map((bank) => ({
-            id: bank.id,
-            amount: bank.balance,
-            type: "credit",
-            platform: "bank",
-            date: new Date().toISOString().split("T")[0], // Use current date as we don't have transaction dates
-            details: `Bank: ${bank.name}`,
-          })),
-          ...userDataObj.cards.map((card) => ({
-            id: card.id,
-            amount: parseFloat(card.number),
-            type: "debit",
-            platform: "card",
-            date: new Date().toISOString().split("T")[0],
-            details: `Card: ${card.cardholderName}`,
-          })),
-          ...userDataObj.wallets.map((wallet) => ({
-            id: wallet.id,
-            amount: wallet.balance,
-            type: "credit",
-            platform: "wallet",
-            date: new Date().toISOString().split("T")[0],
-            details: `Wallet: ${wallet.name}`,
-          })),
-        ];
-
-        setTransactions(allTransactions);
+        // Fetch transactions
+        const transactionsQuery = query(
+          collection(db, "transactions"),
+          where("userId", "==", user.uid)
+        );
+        const transactionsSnapshot = await getDocs(transactionsQuery);
+        const transactionsData = transactionsSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setTransactions(transactionsData);
       }
     };
 
@@ -213,45 +199,115 @@ const Dashboard = () => {
   };
 
   const calculateFinancialHealthScore = () => {
-    if (!userData) return 0;
+    if (!transactions.length) return 0;
 
-    const totalIncome =
-      userData.banks.reduce((sum, bank) => sum + bank.balance, 0) +
-      userData.wallets.reduce((sum, wallet) => sum + wallet.balance, 0);
+    const totalIncome = transactions
+      .filter((t) => t.type === "income")
+      .reduce((sum, t) => sum + t.amount, 0);
 
-    const totalExpenditure =
-      userData.cards.reduce((sum, card) => sum + parseFloat(card.number), 0) +
-      userData.loans.reduce((sum, loan) => sum + loan.amount, 0);
+    const totalExpense = transactions
+      .filter((t) => t.type === "expense")
+      .reduce((sum, t) => sum + t.amount, 0);
 
     if (totalIncome === 0) return "Poor";
 
-    const score = ((totalIncome - totalExpenditure) / totalIncome) * 100;
+    const score = ((totalIncome - totalExpense) / totalIncome) * 100;
 
     return score < 0 ? "Poor" : score.toFixed(2);
   };
 
+  const calculateExpenditureHabit = () => {
+    if (!transactions.length) return "No transaction data available";
+
+    const expenses = transactions.filter((t) => t.type === "expense");
+    const totalExpense = expenses.reduce((sum, t) => sum + t.amount, 0);
+
+    // Group expenses by platform
+    const platformExpenses = expenses.reduce((acc, t) => {
+      acc[t.platform] = (acc[t.platform] || 0) + t.amount;
+      return acc;
+    }, {});
+
+    // Calculate percentages and sort by highest expense
+    const habitAnalysis = Object.entries(platformExpenses)
+      .map(([platform, amount]) => ({
+        platform,
+        percentage: ((amount / totalExpense) * 100).toFixed(2),
+        amount,
+      }))
+      .sort((a, b) => b.amount - a.amount);
+
+    const topExpenses = habitAnalysis.slice(0, 3);
+
+    let recommendation = "Based on your spending habits:\n";
+    topExpenses.forEach((expense) => {
+      recommendation += `- You spend ${expense.percentage}% on ${expense.platform}. `;
+      if (parseFloat(expense.percentage) > 30) {
+        recommendation += `Consider reducing expenses in this category.\n`;
+      } else if (parseFloat(expense.percentage) < 10) {
+        recommendation += `This seems well-managed.\n`;
+      } else {
+        recommendation += `This is a moderate expense.\n`;
+      }
+    });
+
+    return recommendation;
+  };
+
+  const getMonthlyData = (month) => {
+    const [year, monthIndex] = month.split("-");
+    const startDate = new Date(year, monthIndex - 1, 1);
+    const endDate = new Date(year, monthIndex, 0);
+
+    const dailyIncome = {};
+    const dailyExpense = {};
+
+    transactions.forEach((t) => {
+      const date = new Date(t.date);
+      if (date >= startDate && date <= endDate) {
+        const day = date.getDate();
+        if (t.type === "income") {
+          dailyIncome[day] = (dailyIncome[day] || 0) + t.amount;
+        } else {
+          dailyExpense[day] = (dailyExpense[day] || 0) + t.amount;
+        }
+      }
+    });
+
+    const labels = Array.from({ length: endDate.getDate() }, (_, i) => i + 1);
+    const incomeData = labels.map((day) => dailyIncome[day] || 0);
+    const expenseData = labels.map((day) => dailyExpense[day] || 0);
+
+    return {
+      labels,
+      datasets: [
+        {
+          label: "Income",
+          data: incomeData,
+          borderColor: "rgba(75, 192, 192, 1)",
+          backgroundColor: "rgba(75, 192, 192, 0.2)",
+          tension: 0.1,
+        },
+        {
+          label: "Expenditure",
+          data: expenseData,
+          borderColor: "rgba(255, 99, 132, 1)",
+          backgroundColor: "rgba(255, 99, 132, 0.2)",
+          tension: 0.1,
+        },
+      ],
+    };
+  };
+
   const totalBalance = calculateTotalBalance();
   const financialHealthScore = calculateFinancialHealthScore();
+  const expenditureHabit = calculateExpenditureHabit();
 
-  const monthlyData = {
-    labels: ["January", "February", "March", "April", "May", "June"],
-    datasets: [
-      {
-        label: "Income",
-        data: [5000, 5500, 5200, 5800, 6000, 5700],
-        borderColor: "rgba(75, 192, 192, 1)",
-        backgroundColor: "rgba(75, 192, 192, 0.2)",
-        tension: 0.1,
-      },
-      {
-        label: "Expenditure",
-        data: [1000, 1500, 1200, 1800, 2000, 1700],
-        borderColor: "rgba(255, 99, 132, 1)",
-        backgroundColor: "rgba(255, 99, 132, 0.2)",
-        tension: 0.1,
-      },
-    ],
-  };
+  useEffect(() => {
+    if (transactions.length > 0) {
+      setMonthlyData(getMonthlyData(selectedMonth));
+    }
+  }, [transactions, selectedMonth]);
 
   const getFinancialAdvice = async () => {
     try {
@@ -296,7 +352,7 @@ const Dashboard = () => {
       <div className="flex-1 overflow-y-auto">
         <DashNavbar />
         <div className="p-6">
-          <div className="relative p-6 mb-6 bg-white rounded-lg shadow-md">
+          <div className="p-6 mb-6 bg-white rounded-lg shadow-md ">
             <div className="flex items-start justify-between mb-4">
               <h2 className="text-2xl font-semibold">User Overview</h2>
               <button
@@ -336,11 +392,28 @@ const Dashboard = () => {
             <p className="text-gray-800">{advice || "Loading advice..."}</p>
           </div>
 
-          <div className="flex-1 p-6 bg-white rounded-lg shadow-md">
+          <div className="p-6 mb-6 bg-white rounded-lg shadow-md">
+            <h3 className="mb-4 text-xl font-semibold">Expenditure Habit</h3>
+            <p className="text-gray-800">{expenditureHabit}</p>
+          </div>
+
+          <div className="flex-1 p-6 bg-white rounded-lg shadow-md mb-b">
             <h3 className="mb-4 text-xl font-semibold">
               Monthly Income & Expenditure
             </h3>
-            <Line data={monthlyData} height={80} width={300} />
+            <div className="mb-4">
+              <label htmlFor="month-filter" className="mr-2">
+                Select Month:
+              </label>
+              <input
+                type="month"
+                id="month-filter"
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="px-2 py-1 border rounded"
+              />
+            </div>
+            {monthlyData && <Line data={monthlyData} height={80} />}
           </div>
 
           <div className="p-6 bg-white rounded-lg shadow-md">
@@ -377,7 +450,7 @@ const Dashboard = () => {
                     <td className="p-2">
                       <span
                         className={
-                          transaction.type === "credit"
+                          transaction.type === "income"
                             ? "text-green-500"
                             : "text-red-500"
                         }
@@ -387,8 +460,10 @@ const Dashboard = () => {
                     </td>
                     <td className="p-2 capitalize">{transaction.type}</td>
                     <td className="p-2 capitalize">{transaction.platform}</td>
-                    <td className="p-2">{transaction.date}</td>
-                    <td className="p-2">{transaction.details}</td>
+                    <td className="p-2">
+                      {new Date(transaction.date).toLocaleDateString()}
+                    </td>
+                    <td className="p-2">{transaction.remarks}</td>
                   </tr>
                 ))}
               </tbody>

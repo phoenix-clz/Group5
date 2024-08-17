@@ -112,7 +112,7 @@ const TransactionsPage = () => {
                 className="w-full p-2 border rounded"
               >
                 <option value="all">All Types</option>
-                <option value="credit">Credit</option>
+                <option value="income">Credit</option>
                 <option value="expense">Expense</option>
               </select>
             </div>
@@ -149,8 +149,8 @@ const TransactionsPage = () => {
                 {filteredTransactions.map((transaction) => (
                   <tr key={transaction.id} className={transaction.id % 2 === 0 ? 'bg-gray-100' : ''}>
                     <td className="px-4 py-2">{transaction.timestamp.toLocaleString()}</td>
-                    <td className={`px-4 py-2 ${transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}>
-                      {transaction.type === 'credit' ? '+' : '-'}Rs. {transaction.amount}
+                    <td className={`px-4 py-2 ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                      {transaction.type === 'income' ? '+' : '-'}Rs. {transaction.amount}
                     </td>
                     <td className="px-4 py-2">{transaction.type}</td>
                     <td className="px-4 py-2">{transaction.platform}</td>
