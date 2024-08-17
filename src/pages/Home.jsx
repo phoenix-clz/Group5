@@ -6,6 +6,8 @@ import Footer from "../components/Footer";
 import NavBar from "../components/Navbar";
 import InvestmentSection from "../components/InvestmentSection";
 import { useNavigate } from "react-router-dom";
+import ArticlesSection from "../components/ArticlesSection";
+import CoursesSection from "../components/Courses";
 
 const Home = () => {
   const [user, setUser] = useState(null);
@@ -50,8 +52,10 @@ const Home = () => {
         handleLogout={handleLogout}
       />
       <Hero handleLogin={handleLogin} />
-      <FeaturesSection />
+      <CoursesSection/>
       <InvestmentSection/>
+      <FeaturesSection />
+      <ArticlesSection/>
       <Footer />
     </div>
   );
