@@ -125,10 +125,7 @@ const TransactionsPage = () => {
               >
                 <option value="all">All Platforms</option>
                 <option value="bank">Bank</option>
-                <option value="esewa">eSewa</option>
-                <option value="khalti">Khalti</option>
-                <option value="imepay">IME Pay</option>
-                <option value="phonepay">Phone Pay</option>
+                <option value="wallet">Wallet</option>
               </select>
             </div>
           </div>

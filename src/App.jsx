@@ -8,6 +8,7 @@ import WalletPage from "./pages/WalletPage";
 import LoanPage from "./pages/LoanPage";
 import InsurancePage from "./pages/InsurancePage";
 import TransactionsPage from "./pages/TransactionPage";
+import RetirementPlanningSimulator from "./pages/RetirementPlanner";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         <Route path="/loan" element={<LoanPage />} />
         <Route path="/insurance" element={<InsurancePage />} />
         <Route path="/transaction" element={<TransactionsPage />} />
+        <Route path="/retirement-planner" element={<RetirementPlanningSimulator />} />
       </Routes>
     </Router>
   );

@@ -33,12 +33,13 @@ const Sidebar = () => {
 
   const sidebarItems = [
     { name: "Dashboard", path: "/dashboard" },
+    { name: "My Transactions", path: "/transaction" },
     { name: "Bank", path: "/bank" },
     { name: "Card", path: "/card" },
     { name: "Wallet", path: "/wallet" },
     { name: "Loan", path: "/loan" },
     { name: "Insurance", path: "/insurance" },
-    { name: "My Transactions", path: "/transaction" },
+    { name: "Retirement Planner", path: "/retirement-planner" },
   ];
 
   useEffect(() => {

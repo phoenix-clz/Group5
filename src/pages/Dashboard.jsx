@@ -45,6 +45,7 @@ const Dashboard = () => {
   const [selectedMonth, setSelectedMonth] = useState(
     new Date().toISOString().slice(0, 7)
   );
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const generatePDF = () => {
     const doc = new jsPDF();
@@ -63,6 +64,7 @@ const Dashboard = () => {
       return "N/A";
     };
 
+    // Title and Basic Info
     doc.setFontSize(20);
     doc.text("Comprehensive Financial Report", 105, 15, null, null, "center");
 
@@ -72,6 +74,7 @@ const Dashboard = () => {
 
     let yPos = 45;
 
+    // Financial Overview
     doc.setFontSize(16);
     doc.text("Financial Overview", 20, yPos);
     yPos += 10;
@@ -100,8 +103,69 @@ const Dashboard = () => {
     );
     yPos += 15;
 
-    // Add sections for banks, cards, wallets, loans, and insurances here
-    // Similar to the previous version, but use formatCurrency for amounts
+    // Income and Expense Report
+    doc.setFontSize(16);
+    doc.text("Income and Expense Report", 20, yPos);
+    yPos += 10;
+
+    const incomeTransactions = transactions.filter((t) => t.type === "income");
+    const expenseTransactions = transactions.filter(
+      (t) => t.type === "expense"
+    );
+
+    const totalIncome = incomeTransactions.reduce(
+      (sum, t) => sum + t.amount,
+      0
+    );
+    const totalExpense = expenseTransactions.reduce(
+      (sum, t) => sum + t.amount,
+      0
+    );
+
+    doc.setFontSize(12);
+    doc.text(`Total Income: Rs. ${formatCurrency(totalIncome)}`, 30, yPos);
+    yPos += 7;
+    doc.text(`Total Expenses: Rs. ${formatCurrency(totalExpense)}`, 30, yPos);
+    yPos += 7;
+    doc.text(
+      `Net Income: Rs. ${formatCurrency(totalIncome - totalExpense)}`,
+      30,
+      yPos
+    );
+    yPos += 15;
+
+    // Platform-wise breakdown
+    doc.setFontSize(14);
+    doc.text("Platform-wise Breakdown", 20, yPos);
+    yPos += 10;
+
+    const platforms = ["bank", "card", "wallet"];
+    platforms.forEach((platform) => {
+      const platformIncome = incomeTransactions
+        .filter((t) => t.platform === platform)
+        .reduce((sum, t) => sum + t.amount, 0);
+      const platformExpense = expenseTransactions
+        .filter((t) => t.platform === platform)
+        .reduce((sum, t) => sum + t.amount, 0);
+
+      doc.setFontSize(12);
+      doc.text(
+        `${platform.charAt(0).toUpperCase() + platform.slice(1)}:`,
+        30,
+        yPos
+      );
+      yPos += 7;
+      doc.text(`  Income: Rs. ${formatCurrency(platformIncome)}`, 40, yPos);
+      yPos += 7;
+      doc.text(`  Expense: Rs. ${formatCurrency(platformExpense)}`, 40, yPos);
+      yPos += 7;
+      doc.text(
+        `  Net: Rs. ${formatCurrency(platformIncome - platformExpense)}`,
+        40,
+        yPos
+      );
+      yPos += 10;
+    });
 
     // Transactions History
     doc.addPage();
@@ -113,7 +177,7 @@ const Dashboard = () => {
       safeGet(t, "type"),
       safeGet(t, "platform"),
       safeGet(t, "date"),
-      safeGet(t, "details"),
+      safeGet(t, "remarks"),
     ]);
 
     autoTable(doc, {
@@ -350,14 +414,16 @@ const Dashboard = () => {
       : transactions.filter((t) => t.platform === selectedPlatform);
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      <Sidebar />
+    <div className="flex flex-col h-screen bg-gray-100 md:flex-row">
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       <div className="flex-1 overflow-y-auto">
-        <DashNavbar />
-        <div className="p-6">
-          <div className="p-6 mb-6 bg-white rounded-lg shadow-md ">
-            <div className="flex items-start justify-between mb-4">
-              <h2 className="text-2xl font-semibold">User Overview</h2>
+        <DashNavbar onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
+        <div className="p-4 md:p-6">
+          <div className="p-4 mb-4 bg-white rounded-lg shadow-md md:p-6">
+            <div className="flex flex-col items-start justify-between mb-4 md:flex-row md:items-center">
+              <h2 className="mb-2 text-xl font-semibold md:mb-0 md:text-2xl">
+                User Overview
+              </h2>
               <button
                 onClick={generatePDF}
                 className="px-4 py-2 text-sm text-white bg-blue-500 rounded hover:bg-blue-600"
@@ -365,14 +431,14 @@ const Dashboard = () => {
                 Generate Report
               </button>
             </div>
-            <p className="mb-2 text-3xl font-bold text-green-600">
+            <p className="mb-2 text-2xl font-bold text-green-600 md:text-3xl">
               Rs. {totalBalance.toLocaleString()}
             </p>
             <p className="text-gray-600">Total Balance</p>
             <p className="mt-2">
               Financial Health Score:
               <span
-                className={
+                className={`${
                   financialHealthScore === "Poor"
                     ? "text-red-500"
                     : parseFloat(financialHealthScore) > 70
@@ -380,7 +446,7 @@ const Dashboard = () => {
                     : parseFloat(financialHealthScore) > 40
                     ? "text-yellow-500"
                     : "text-red-500"
-                }
+                }`}
               >
                 {" "}
                 {financialHealthScore === "Poor"
@@ -390,22 +456,29 @@ const Dashboard = () => {
             </p>
           </div>
 
-          <div className="p-6 mb-6 bg-white rounded-lg shadow-md">
-            <h3 className="mb-4 text-xl font-semibold">Personalized Advice</h3>
+          <div className="p-4 mb-4 bg-white rounded-lg shadow-md md:p-6">
+            <h3 className="mb-4 text-lg font-semibold md:text-xl">
+              Personalized Advice
+            </h3>
             <p className="text-gray-800">{advice || "Loading advice..."}</p>
           </div>
 
-          <div className="p-6 mb-6 bg-white rounded-lg shadow-md">
-            <h3 className="mb-4 text-xl font-semibold">Expenditure Habit</h3>
+          <div className="p-4 mb-4 bg-white rounded-lg shadow-md md:p-6">
+            <h3 className="mb-4 text-lg font-semibold md:text-xl">
+              Expenditure Habit
+            </h3>
             <p className="text-gray-800">{expenditureHabit}</p>
           </div>
 
-          <div className="flex-1 p-6 bg-white rounded-lg shadow-md mb-b">
-            <h3 className="mb-4 text-xl font-semibold">
+          <div className="p-4 mb-4 bg-white rounded-lg shadow-md md:p-6">
+            <h3 className="mb-4 text-lg font-semibold md:text-xl">
               Monthly Income & Expenditure
             </h3>
             <div className="mb-4">
-              <label htmlFor="month-filter" className="mr-2">
+              <label
+                htmlFor="month-filter"
+                className="block mb-2 md:inline md:mr-2"
+              >
                 Select Month:
               </label>
               <input
@@ -413,23 +486,28 @@ const Dashboard = () => {
                 id="month-filter"
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                className="px-2 py-1 border rounded"
+                className="w-full px-2 py-1 border rounded md:w-auto"
               />
             </div>
             {monthlyData && <Line data={monthlyData} height={80} />}
           </div>
 
-          <div className="p-6 bg-white rounded-lg shadow-md">
-            <h3 className="mb-4 text-xl font-semibold">Recent Transactions</h3>
+          <div className="p-4 bg-white rounded-lg shadow-md md:p-6">
+            <h3 className="mb-4 text-lg font-semibold md:text-xl">
+              Recent Transactions
+            </h3>
             <div className="mb-4">
-              <label htmlFor="platform-filter" className="mr-2">
+              <label
+                htmlFor="platform-filter"
+                className="block mb-2 md:inline md:mr-2"
+              >
                 Filter by Platform:
               </label>
               <select
                 id="platform-filter"
                 value={selectedPlatform}
                 onChange={(e) => setSelectedPlatform(e.target.value)}
-                className="px-2 py-1 border rounded"
+                className="w-full px-2 py-1 border rounded md:w-auto"
               >
                 <option value="all">All</option>
                 <option value="bank">Bank</option>
@@ -437,40 +515,42 @@ const Dashboard = () => {
                 <option value="wallet">Wallet</option>
               </select>
             </div>
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-200">
-                  <th className="p-2 text-left">Amount</th>
-                  <th className="p-2 text-left">Type</th>
-                  <th className="p-2 text-left">Platform</th>
-                  <th className="p-2 text-left">Date</th>
-                  <th className="p-2 text-left">Details</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredTransactions.map((transaction) => (
-                  <tr key={transaction.id} className="border-b">
-                    <td className="p-2">
-                      <span
-                        className={
-                          transaction.type === "income"
-                            ? "text-green-500"
-                            : "text-red-500"
-                        }
-                      >
-                        Rs. {transaction.amount}
-                      </span>
-                    </td>
-                    <td className="p-2 capitalize">{transaction.type}</td>
-                    <td className="p-2 capitalize">{transaction.platform}</td>
-                    <td className="p-2">
-                      {new Date(transaction.date).toLocaleDateString()}
-                    </td>
-                    <td className="p-2">{transaction.remarks}</td>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-gray-200">
+                    <th className="p-2 text-left">Amount</th>
+                    <th className="p-2 text-left">Type</th>
+                    <th className="p-2 text-left">Platform</th>
+                    <th className="p-2 text-left">Date</th>
+                    <th className="p-2 text-left">Details</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filteredTransactions.map((transaction) => (
+                    <tr key={transaction.id} className="border-b">
+                      <td className="p-2">
+                        <span
+                          className={
+                            transaction.type === "income"
+                              ? "text-green-500"
+                              : "text-red-500"
+                          }
+                        >
+                          Rs. {transaction.amount}
+                        </span>
+                      </td>
+                      <td className="p-2 capitalize">{transaction.type}</td>
+                      <td className="p-2 capitalize">{transaction.platform}</td>
+                      <td className="p-2">
+                        {new Date(transaction.date).toLocaleDateString()}
+                      </td>
+                      <td className="p-2">{transaction.remarks}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
