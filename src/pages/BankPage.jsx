@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Chart as ChartJS,
   ArcElement,
@@ -10,8 +10,6 @@ import {
   Title,
 } from "chart.js";
 import { Pie, Bar } from "react-chartjs-2";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 import { MinusCircleIcon, PlusCircleIcon } from "@heroicons/react/16/solid";
 import Sidebar from "../components/Sidebar";
 import { DashNavbar } from "../components/DashNavbar";
@@ -20,11 +18,11 @@ import {
   collection,
   getDocs,
   addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
   query,
   where,
+  deleteDoc,
+  doc,
+  updateDoc,
 } from "firebase/firestore";
 
 ChartJS.register(
@@ -41,15 +39,10 @@ const BankPage = () => {
   const [user, setUser] = useState(null);
   const [banks, setBanks] = useState([]);
   const [transactions, setTransactions] = useState([]);
-  const [selectedBank, setSelectedBank] = useState("all");
   const [totalAmount, setTotalAmount] = useState(0);
   const [totalIncome, setTotalIncome] = useState(0);
   const [totalExpenses, setTotalExpenses] = useState(0);
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
-  const [transactionType, setTransactionType] = useState("all");
   const [newBankName, setNewBankName] = useState("");
-  const [newBankBalance, setNewBankBalance] = useState("");
   const [nepaliBanks, setNepaliBanks] = useState([]);
 
   useEffect(() => {
@@ -60,7 +53,6 @@ const BankPage = () => {
         setUser(parsedUser);
       } else {
         console.error("User object is missing uid");
-        // Handle this error appropriately, maybe redirect to login
       }
     }
   }, []);
@@ -71,7 +63,6 @@ const BankPage = () => {
       fetchTransactions();
     }
 
-    // Set the list of Nepali banks
     setNepaliBanks([
       "Nepal Rastra Bank",
       "Nepal Bank Limited",
@@ -104,118 +95,148 @@ const BankPage = () => {
   }, [user]);
 
   const fetchBanks = async () => {
-    if (!user || !user.uid) return;
-    const banksCollection = collection(db, "banks");
-    const q = query(banksCollection, where("userId", "==", user.uid));
-    const banksSnapshot = await getDocs(q);
-    const banksList = banksSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-    setBanks(banksList);
-    calculateTotalAmount(banksList);
+    try {
+      if (!user || !user.uid) return;
+      const banksCollection = collection(db, "banks");
+      const q = query(banksCollection, where("userId", "==", user.uid));
+      const banksSnapshot = await getDocs(q);
+      const banksList = banksSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      console.log("Fetched banks:", banksList);
+      setBanks(banksList);
+    } catch (error) {
+      console.error("Error fetching banks:", error);
+    }
   };
 
   const fetchTransactions = async () => {
-    if (!user || !user.uid) return;
-    const transactionsCollection = collection(db, "transactions");
-    const q = query(transactionsCollection, where("userId", "==", user.uid));
-    const transactionsSnapshot = await getDocs(q);
-    const transactionsList = transactionsSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
+    try {
+      if (!user || !user.uid) return;
+      const transactionsCollection = collection(db, "transactions");
+      const q = query(transactionsCollection, where("userId", "==", user.uid));
+      const transactionsSnapshot = await getDocs(q);
+      const transactionsList = transactionsSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      console.log("Fetched transactions:", transactionsList);
+      setTransactions(transactionsList);
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (banks.length > 0 && transactions.length > 0) {
+      calculateBalances();
+    }
+  }, [banks, transactions]);
+
+  const calculateBalances = () => {
+    const bankBalances = {};
+    let totalBalance = 0;
+    let income = 0;
+    let expenses = 0;
+
+    transactions.forEach((t) => {
+      if (t.platform === "banks") {
+        const bankName = t.subPlatform;
+        if (!bankBalances[bankName]) {
+          bankBalances[bankName] = 0;
+        }
+        if (t.type === "income") {
+          bankBalances[bankName] += t.amount;
+          totalBalance += t.amount;
+          income += t.amount;
+        } else if (t.type === "expense") {
+          bankBalances[bankName] -= t.amount;
+          totalBalance -= t.amount;
+          expenses += t.amount;
+        }
+      }
+    });
+
+    const updatedBanks = banks.map((bank) => ({
+      ...bank,
+      balance: bankBalances[bank.name] || bank.balance || 0,
     }));
-    setTransactions(transactionsList);
-    calculateTotals(transactionsList);
-  };
 
-  const calculateTotalAmount = (banks) => {
-    const total = banks.reduce((sum, bank) => sum + bank.balance, 0);
-    setTotalAmount(total);
-  };
-
-  const calculateTotals = (transactions) => {
-    const income = transactions
-      .filter((t) => t.type === "income")
-      .reduce((sum, t) => sum + t.amount, 0);
-    const expenses = Math.abs(
-      transactions
-        .filter((t) => t.type === "expense")
-        .reduce((sum, t) => sum + t.amount, 0)
-    );
+    setBanks(updatedBanks);
+    setTotalAmount(totalBalance);
     setTotalIncome(income);
     setTotalExpenses(expenses);
   };
 
-  const toggleBankLink = async (bankId) => {
-    const bankRef = doc(db, "banks", bankId);
-    const bank = banks.find((b) => b.id === bankId);
-    await updateDoc(bankRef, { linked: !bank.linked });
-    fetchBanks();
+  const toggleBankLink = async (bankId, isLinked) => {
+    try {
+      const bankRef = doc(db, "banks", bankId);
+      await updateDoc(bankRef, { linked: !isLinked });
+      fetchBanks();
+    } catch (error) {
+      console.error("Error toggling bank link:", error);
+    }
   };
 
   const addNewBank = async () => {
-    if (newBankName && newBankBalance && user && user.uid) {
-      const newBank = {
-        name:
-          newBankName === "Other"
-            ? prompt("Enter custom bank name:")
-            : newBankName,
-        balance: parseFloat(newBankBalance),
-        linked: true,
-        userId: user.uid,
-      };
-      await addDoc(collection(db, "banks"), newBank);
-      fetchBanks();
-      setNewBankName("");
-      setNewBankBalance("");
+    if (newBankName && user && user.uid) {
+      const bankName =
+        newBankName === "Other"
+          ? prompt("Enter custom bank name:")
+          : newBankName;
+      if (bankName) {
+        await addDoc(collection(db, "banks"), {
+          userId: user.uid,
+          name: bankName,
+          linked: true,
+          balance: 0,
+        });
+        fetchBanks();
+        setNewBankName("");
+      }
     } else {
       console.error("Missing required data for adding a new bank");
-      // Handle this error appropriately
     }
   };
 
   const removeBank = async (bankId) => {
-    await deleteDoc(doc(db, "banks", bankId));
-    fetchBanks();
+    if (window.confirm("Are you sure you want to remove this bank?")) {
+      await deleteDoc(doc(db, "banks", bankId));
+      fetchBanks();
+    }
   };
 
-  const filteredTransactions = transactions.filter((t) => {
-    const bankMatch =
-      selectedBank === "all" || t.bankId === parseInt(selectedBank);
-    const typeMatch = transactionType === "all" || t.type === transactionType;
-    const dateMatch =
-      (!startDate || new Date(t.date) >= startDate) &&
-      (!endDate || new Date(t.date) <= endDate);
-    return bankMatch && typeMatch && dateMatch;
-  });
+  const pieChartData = useMemo(() => {
+    return {
+      labels: banks.filter((bank) => bank.linked).map((bank) => bank.name),
+      datasets: [
+        {
+          data: banks.filter((bank) => bank.linked).map((bank) => bank.balance),
+          backgroundColor: [
+            "#FF6384",
+            "#36A2EB",
+            "#FFCE56",
+            "#4BC0C0",
+            "#9966FF",
+          ],
+        },
+      ],
+    };
+  }, [banks]);
 
-  const pieChartData = {
-    labels: banks.filter((bank) => bank.linked).map((bank) => bank.name),
-    datasets: [
-      {
-        data: banks.filter((bank) => bank.linked).map((bank) => bank.balance),
-        backgroundColor: [
-          "#FF6384",
-          "#36A2EB",
-          "#FFCE56",
-          "#4BC0C0",
-          "#9966FF",
-        ],
-      },
-    ],
-  };
-
-  const barChartData = {
-    labels: ["Income", "Expenses"],
-    datasets: [
-      {
-        label: "Amount",
-        data: [totalIncome, totalExpenses],
-        backgroundColor: ["#36A2EB", "#FF6384"],
-      },
-    ],
-  };
+  const barChartData = useMemo(() => {
+    return {
+      labels: ["Income", "Expenses"],
+      datasets: [
+        {
+          label: "Amount",
+          data: [totalIncome, totalExpenses],
+          backgroundColor: ["#36A2EB", "#FF6384"],
+        },
+      ],
+    };
+  }, [totalIncome, totalExpenses]);
 
   if (!user) {
     return <div>Loading...</div>;
@@ -246,8 +267,8 @@ const BankPage = () => {
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-xl font-semibold">{bank.name}</h3>
                     <button
-                      onClick={() => toggleBankLink(bank.id)}
-                      className={`p-1 rounded Rs. {
+                      onClick={() => toggleBankLink(bank.id, bank.linked)}
+                      className={`p-1 rounded ${
                         bank.linked
                           ? "bg-red-500 text-white"
                           : "bg-green-500 text-white"
@@ -261,7 +282,7 @@ const BankPage = () => {
                     </button>
                   </div>
                   <p
-                    className={`text-2xl font-bold Rs. {
+                    className={`text-2xl font-bold ${
                       bank.linked ? "text-green-600" : "text-gray-400"
                     }`}
                   >
@@ -296,13 +317,6 @@ const BankPage = () => {
                   </option>
                 ))}
               </select>
-              <input
-                type="number"
-                value={newBankBalance}
-                onChange={(e) => setNewBankBalance(e.target.value)}
-                placeholder="Initial Balance"
-                className="p-2 border rounded"
-              />
               <button
                 onClick={addNewBank}
                 className="px-4 py-2 text-white bg-green-500 rounded"
@@ -316,12 +330,8 @@ const BankPage = () => {
             <div>
               <h2 className="mb-4 text-2xl font-bold">Bank Distribution</h2>
               <div style={{ width: "300px", height: "300px" }}>
-                {" "}
-                {/* Adjust these values as needed */}
                 <Pie
                   data={pieChartData}
-                  width={300}
-                  height={300}
                   options={{
                     responsive: true,
                     maintainAspectRatio: false,

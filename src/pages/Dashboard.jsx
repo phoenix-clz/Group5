@@ -41,6 +41,7 @@ const Dashboard = () => {
   const [userData, setUserData] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [monthlyData, setMonthlyData] = useState(null);
+  const [totalBalance, setTotalBalance] = useState(0);
   const [selectedMonth, setSelectedMonth] = useState(
     new Date().toISOString().slice(0, 7)
   );
@@ -179,23 +180,26 @@ const Dashboard = () => {
           ...doc.data(),
         }));
         setTransactions(transactionsData);
+
+        // Calculate total balance based on transactions
+        const balance = calculateTotalBalance(transactionsData);
+        setTotalBalance(balance);
       }
     };
 
     fetchUserData();
   }, [user]);
 
-  const calculateTotalBalance = () => {
-    if (!userData) return 0;
-    const bankBalance = userData.banks.reduce(
-      (sum, bank) => sum + bank.balance,
-      0
-    );
-    const walletBalance = userData.wallets.reduce(
-      (sum, wallet) => sum + wallet.balance,
-      0
-    );
-    return bankBalance + walletBalance;
+  const calculateTotalBalance = (transactions) => {
+    let balance = 0;
+    transactions.forEach((transaction) => {
+      if (transaction.type === "income") {
+        balance += transaction.amount;
+      } else if (transaction.type === "expense") {
+        balance -= transaction.amount;
+      }
+    });
+    return balance;
   };
 
   const calculateFinancialHealthScore = () => {
@@ -299,7 +303,6 @@ const Dashboard = () => {
     };
   };
 
-  const totalBalance = calculateTotalBalance();
   const financialHealthScore = calculateFinancialHealthScore();
   const expenditureHabit = calculateExpenditureHabit();
 
