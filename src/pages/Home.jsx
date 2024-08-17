@@ -4,6 +4,7 @@ import Hero from "../components/Hero";
 import FeaturesSection from "../components/FeatureSection";
 import Footer from "../components/Footer";
 import NavBar from "../components/Navbar";
+import InvestmentSection from "../components/InvestmentSection";
 import { useNavigate } from "react-router-dom";
 
 const Home = () => {
@@ -50,6 +51,7 @@ const Home = () => {
       />
       <Hero handleLogin={handleLogin} />
       <FeaturesSection />
+      <InvestmentSection/>
       <Footer />
     </div>
   );
