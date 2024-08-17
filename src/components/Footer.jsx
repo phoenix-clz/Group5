@@ -2,7 +2,7 @@ const Footer = () => {
   return (
     <footer className="px-12 bg-gray-900 shadow ">
       <div className="mx-auto  md:py-8">
-        <div className="sm:flex sm:items-center sm:justify-between">
+        <div className="sm:flex sm:items-center sm:justify-between pt-4">
           <a
             href="/"
             className="flex items-center mb-4 space-x-3 sm:mb-0 rtl:space-x-reverse"

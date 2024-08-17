@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { FaSignOutAlt, FaTachometerAlt, FaBars, FaTimes } from "react-icons/fa";
+import { FaSignOutAlt, FaTachometerAlt, FaBars, FaTimes, FaCalculator } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
 
@@ -43,8 +43,8 @@ const NavBar = ({ user, handleLogin, handleLogout }) => {
           </button>
         </div>
         <div className={`hidden items-center md:flex ${menuOpen ? 'block' : 'hidden'} md:block`}>
-          <Link to="/calculator" className="px-4 text-md">
-            Calculator
+          <Link to="/calculator" className="px-4 flex  items-center text-md">
+          <FaCalculator className="mr-2"/>  Calculator
           </Link>
           {user ? (
             <>
@@ -68,10 +68,9 @@ const NavBar = ({ user, handleLogin, handleLogout }) => {
                     />
                   ) : (
                     <span className="w-10 h-10 mr-2 rounded-full bg-gray-400 flex items-center justify-center">
-                      {user.displayName[0]}
+                      {/* {user.displayName[0]} */}
                     </span>
                   )}
-                  <span className="mr-2 text-white">{user.displayName}</span>
                 </div>
                 {dropdownOpen && (
                   <div className="absolute right-0 w-48 mt-2 text-black bg-white rounded-lg shadow-lg">
@@ -119,37 +118,19 @@ const NavBar = ({ user, handleLogin, handleLogout }) => {
                 Dashboard
               </Link>
               <div className="relative mt-2" ref={dropdownRef}>
-                <div className="flex items-center cursor-pointer" onClick={toggleDropdown}>
-                  {user.photoURL && (
-                    <img
-                      src={user.photoURL}
-                      alt="User Avatar"
-                      className="w-10 h-10 mr-2 rounded-full"
-                    />
-                  )}
-                  <span className="text-white">{user.displayName}</span>
-                </div>
-                {dropdownOpen && (
-                  <div className="mt-2 w-48 text-black bg-white rounded-lg shadow-lg">
-                    <div className="p-2">
-                      <span className="block px-4 py-2 text-sm font-semibold">
-                        {user.displayName}
-                      </span>
-                      <button
+              <button
                         onClick={handleLogout}
                         className="block w-full px-4 py-2 text-sm text-left text-red-600 hover:bg-gray-100"
                       >
                         <FaSignOutAlt className="inline mr-2" /> Logout
                       </button>
-                    </div>
-                  </div>
-                )}
+                
               </div>
             </>
           ) : (
             <button
               onClick={handleLogin}
-              className="flex items-center block w-full px-4 py-2 text-white bg-blue-500 rounded"
+              className=" items-center block w-full px-4 py-2 text-white bg-blue-500 rounded"
             >
               <img
                 src="https://cdn1.iconfinder.com/data/icons/google-s-logo/150/Google_Icons-09-1024.png"
